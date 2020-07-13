@@ -4,6 +4,6 @@ Used at Sunrise NYC for quick quote cards to put on our various social media pla
 
 ## TODO
 
-- [] Remove DP-specific colors, fonts, and logos; replace with those of Sunrise
-- [] Remove unnecessary options
-- [] Add ability to change canvas size for Instagram stories, posts, etc.
+- [x] Remove DP-specific colors, fonts, and logos; replace with those of Sunrise
+- [x] Remove unnecessary options
+- [ ] Add ability to change canvas size for Instagram stories, posts, etc.

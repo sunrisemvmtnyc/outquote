@@ -5,18 +5,17 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-  <script src="https://use.typekit.net/psa2uuo.js"></script>
-  <script>try{Typekit.load({ async: false });renderContent();}catch(e){}</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <div class="row">
       <h2>Outquote</h2>
-      <p>A simple text card creator.</p>
+      <p>Social media quote card generator.</p>
     </div>
     <canvas id="canvas">
       Your browser does not support the canvas element. Please use a modern browser.
@@ -49,23 +48,17 @@
       </div>
       <div class="four columns">
         <h5>Style</h5>
-        <select class="u-full-width publication" id="publicationSelect">
-          <option value="dp">The Daily Pennsylvanian</option>
-          <option value="street">34th Street</option>
-          <option value="utb">Under the Button</option>
+        <select class="u-full-width background" id="backgroundColor">
+          <option value="gray">Gray</option>
+          <option value="gradient">Gradient</option>
         </select>
-        <input type="checkbox" id="inverseColors">Use inverse colors<br>
-        <input type="checkbox" id="useWordmark">Use DP wordmark<br>
-        <input type="checkbox" id="useSports">Use sports logo
+        <input type="checkbox" id="useWordmark">Use text logo<br>
       </div>
       <div class="four columns">
         <h5>Elements</h5>
         <input type="checkbox" id="toggleAttribution" checked>Include attribution<br>
         <input type="checkbox" id="toggleAttributionTitle" checked>Include attribution title<br>
         <input type="checkbox" id="toggleLogo" checked>Include logo<br>
-        <input type="checkbox" id="togglePicture">Include photo (must be square)<br>
-        <button class="u-full-width button-secondary" type="button" id="uploadPicture">Upload photo &#8593;</button>
-        <input type="file" accept=".png,.jpg,.jpeg" id="fileInput" hidden>
       </div>
     </div>
     <div class="row">

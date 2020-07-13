@@ -1,32 +1,30 @@
-var quote = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
-var name = "Amy Gutmann";
-var title = "Penn President";
-var showAttribution = true;
-var showAttributionTitle = true;
-var includeLogo = true;
-var centerElements = false;
-var inverseColors = false;
-var useWordmark = false;
-var useSports = false;
-var includePhoto = false;
-var photoURL = "";
+let quote = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+let name = "First Last";
+let title = "Position";
+let showAttribution = true;
+let showAttributionTitle = true;
+let includeLogo = true;
+let centerElements = false;
+let useWordmark = false;
+let includePhoto = false;
+let photoURL = "";
 
-// colors by publication
-const primary = ['#aa1e22', '#44bfbf', '#456CB3'];
-const logo = ['logos/dp.svg', 'logos/street.svg', 'logos/utb.svg'];
-const inverse = ['logos/inverse-dp.svg', 'logos/inverse-street.svg', 'logos/inverse-utb.svg'];
+const PRIMARY = "#FFDE16";
+const BACKGROUNDS = ["#33342E", "#FD9014"];
+const TEXT_COLORS = ["#FFDE16", "#33342E"]
+const LOGOS = ["logos/logo-yellow.svg", "logos/logo-gray.svg"];
+const TEXT_LOGOS = ["logos/text-yellow.svg", "logos/text-gray.svg"];
 
-var wrapText = function(context, text, x, y, maxWidth, lineHeight) {
-  var words = text.split(' ');
-  var line = '';
+const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
+  const words = text.split(" ");
+  let line = "";
 
-  for (var n = 0; n < words.length; n++) {
-    var testLine = line + words[n] + ' ';
-    var metrics = context.measureText(testLine);
-    var testWidth = metrics.width;
-    if (testWidth > maxWidth && n > 0) {
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + " ";
+    const metrics = context.measureText(testLine);
+    if (metrics.width > maxWidth && n > 0) {
       context.fillText(line, x, y);
-      line = words[n] + ' ';
+      line = words[n] + " ";
       y += lineHeight;
     } else {
       line = testLine;
@@ -36,162 +34,82 @@ var wrapText = function(context, text, x, y, maxWidth, lineHeight) {
   return y;
 }
 
-var renderContent = function() {
-  var canvas = document.getElementById("canvas");
+const renderContent = () => {
+  const canvas = document.getElementById("canvas");
   canvas.width = 1000;
   canvas.height = 500;
 
-  var pub = document.getElementById("publicationSelect").selectedIndex;
+  // the background drop down is used to determine the color scheme
+  const scheme = document.getElementById("backgroundColor").selectedIndex;
 
-  // QUOTE TEXT + BG + IMG
-  var quoteCtx = canvas.getContext("2d");
-  quoteCtx.fillStyle = primary[pub];
+  // use the primary color for the outline
+  const quoteCtx = canvas.getContext("2d");
+  quoteCtx.crossorigin = "Anonymous";
+  quoteCtx.fillStyle = PRIMARY;
   quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
-  if (inverseColors) {
-    quoteCtx.fillStyle = "#ffffff";
-    quoteCtx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
-  }
+  // then fill the background with the selection
+  quoteCtx.fillStyle = BACKGROUNDS[scheme];
+  quoteCtx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
 
-  quoteCtx.font = "200 38px lora";
-  if (inverseColors) {
-    quoteCtx.fillStyle = primary[pub];
-  } else {
-    quoteCtx.fillStyle = "#ffffff";
-  }
+  quoteCtx.font = "400 38px source sans pro";
+  quoteCtx.fillStyle = TEXT_COLORS[scheme];
 
   if (centerElements) {
     quoteCtx.textAlign = "center";
   }
 
-  /* * * * * * * * * * * * * * * * * * * * *
-  * RENDER CANVAS WITH PHOTO
-  * * * * * * * * * * * * * * *  * * * * * */
-  if (includePhoto && photoURL != "") {
-    var attribY = wrapText(quoteCtx, "\“" + quote + "\”", centerElements ? 750 : 520,
-      canvas.height / 2 - (showAttribution ? 100 : 70), 460, 48);
+  // render elements
+  const quoteBottomSpacing = (showAttribution ? 0 : -20)
+    + (includeLogo ? 50 : 120) + (!showAttribution && !includeLogo ? 40 : 0);
+  wrapText(quoteCtx, "\“" + quote + "\”", centerElements ? 500 : 50,
+    canvas.height / 2 - quoteBottomSpacing, 800, 48);
 
-    // load logo
-    if (includeLogo) {
-      var image = new Image();
-      image.onload = function() {
-        var aspect = image.width / image.height;
-        if (useWordmark) {
-          var width = 40 * aspect;
-          quoteCtx.drawImage(image, canvas.width - width - 40, 40, width, 40);
-        } else {
-          var width = 50 * aspect;
-          quoteCtx.drawImage(image, canvas.width - width - 40, 40, width, 50);
-        }
-      }
+  // load logo
+  if (includeLogo) {
+    const image = new Image();
+    image.onload = () => {
+      const aspect = image.width / image.height;
+      const width = 50 * aspect;
+      quoteCtx.drawImage(image, centerElements ? (canvas.width - width) / 2 + 10 : canvas.width - width - 50, 50,
+        width, 50);
     }
-
-    // load photo
-    var photo = new Image();
-    photo.onload = function() {
-      quoteCtx.drawImage(photo, 30, 30, 440, 440);
-    }
-    photo.src = photoURL;
-
-    if (showAttribution) {
-      quoteCtx.textAlign = "left"; // makes below calculations work\
-      var nameCtx = canvas.getContext("2d");
-      var titleCtx = canvas.getContext("2d");
-
-      // NAME TEXT
-      nameCtx.font = (showAttributionTitle) ? "38px neuzeit-grotesk" : "100 38px neuzeit-grotesk";
-      if (inverseColors) {
-        nameCtx.fillStyle = primary[pub];
-      } else {
-        nameCtx.fillStyle = "#ffffff";
-      }
-      var nameY = (showAttributionTitle) ?
-        attribY + 100 < (canvas.height - 70) ? attribY + 100 : canvas.height - 70 :
-        attribY + 135 < (canvas.height - 35) ? attribY + 135 : canvas.height - 35;
-      nameCtx.fillText(name, 520, nameY);
-
-      // TITLE TEXT
-      if (showAttributionTitle) {
-        titleCtx.font = "100 30px neuzeit-grotesk";
-        titleCtx.fillText(title, 520, attribY + 140 < (canvas.height - 30) ? attribY + 140 : canvas.height - 30);
-      }
-  	}
-
-  /* * * * * * * * * * * * * * * * * * * * *
-  * RENDER CANVAS WITHOUT PHOTO
-  * * * * * * * * * * * * * * *  * * * * * */
-  } else {
-    var quoteBottomSpacing = (showAttribution ? 0 : -20) + (includeLogo ? 50 : 120)
-     + (!showAttribution && !includeLogo ? 40 : 0);
-    wrapText(quoteCtx, "\“" + quote + "\”", centerElements ? 500 : 50,
-      canvas.height / 2 - quoteBottomSpacing, 800, 48);
-
-    // load logo
-    if (includeLogo) {
-      var image = new Image();
-      image.onload = function() {
-        var aspect = image.width / image.height;
-        var width = 50 * aspect;
-        quoteCtx.drawImage(image, (centerElements ? (canvas.width - width) / 2 + 10 : canvas.width - width - 50), 50,
-          width, 50);
-      }
-    }
-
-    if (showAttribution) {
-      quoteCtx.textAlign = "left"; // makes below calculations work
-      var nameCtx = canvas.getContext("2d");
-      var titleCtx = canvas.getContext("2d");
-
-      // set the nameCtx font to get correct width measurement
-      nameCtx.font = (showAttributionTitle) ? "38px neuzeit-grotesk" : "100 38px neuzeit-grotesk";
-
-      var nameLength = (showAttributionTitle) ? nameCtx.measureText(name + " | ").width : nameCtx.measureText(name).width;
-      var titleLength = titleCtx.measureText(title).width;
-
-      var centerPos = (showAttributionTitle) ? canvas.width / 2 - nameLength / 2 - titleLength / 2 : canvas.width / 2 - nameLength / 2;
-      var nameCtxX = centerElements ? centerPos : 50;
-      var titleCtxX = nameLength + nameCtxX;
-
-      // NAME TEXT
-      nameCtx.fillStyle = inverseColors ? primary[pub] : "#ffffff";
-      nameCtx.fillText((showAttributionTitle) ? name + " | " : name, nameCtxX,
-        canvas.height - (includeLogo ? 70 : 120) + (!includeLogo && showAttribution ? 50 : 0));
-
-      // TITLE TEXT
-      if (showAttributionTitle) {
-        titleCtx.font = "100 38px neuzeit-grotesk";
-        titleCtx.fillText(title, titleCtxX, canvas.height - (includeLogo ? 70 : 120)
-          + (!includeLogo && showAttribution ? 50 : 0));
-      }
-  	}
+    image.src = useWordmark ? TEXT_LOGOS[scheme] : LOGOS[scheme];
   }
 
-  // add logo
-  if (useSports) {
-    if (inverseColors) {
-      image.src = "logos/inverse-sports.svg";
-    } else {
-      image.src = "logos/sports.svg";
+  if (showAttribution) {
+    quoteCtx.textAlign = "left"; // makes below calculations work
+    const nameCtx = canvas.getContext("2d");
+    const titleCtx = canvas.getContext("2d");
+
+    // set the nameCtx font to get correct width measurement
+    nameCtx.font = showAttributionTitle ? "700 38px source sans pro" : "400 38px source sans pro";
+
+    const nameLength = showAttributionTitle ? nameCtx.measureText(name + " | ").width : nameCtx.measureText(name).width;
+    const titleLength = titleCtx.measureText(title).width;
+
+    const centerPos = (showAttributionTitle) ? canvas.width / 2 - nameLength / 2 - titleLength / 2 : canvas.width / 2 - nameLength / 2;
+    const nameCtxX = centerElements ? centerPos : 50;
+    const titleCtxX = nameLength + nameCtxX;
+
+    // fill name text
+    nameCtx.fillStyle = TEXT_COLORS[scheme];
+    nameCtx.fillText(showAttributionTitle ? name + " | " : name, nameCtxX,
+      canvas.height - (includeLogo ? 70 : 120) + (!includeLogo && showAttribution ? 50 : 0));
+
+    // fill title text
+    if (showAttributionTitle) {
+      titleCtx.font = "400 38px source sans pro";
+      titleCtx.fillText(title, titleCtxX, canvas.height - (includeLogo ? 70 : 120)
+        + (!includeLogo && showAttribution ? 50 : 0));
     }
-  } else if (useWordmark) {
-    if (inverseColors) {
-      image.src = "logos/inverse-dp-wordmark.svg";
-    } else {
-      image.src = "logos/dp-wordmark.svg";
-    }
-  } else if (includeLogo) {
-    if (inverseColors) {
-      image.src = inverse[pub];
-    } else {
-      image.src = logo[pub];
-    }
-  }
+	}
 }
 
 window.setTimeout(function() {
   renderContent();
 }, 700);
 
-document.getElementById('quoteBox').oninput = function() {
+document.getElementById("quoteBox").oninput = function() {
   quote = this.value;
 
   // Convert all quotes to curly quotes
@@ -203,24 +121,24 @@ document.getElementById('quoteBox').oninput = function() {
   renderContent();
 }
 
-document.getElementById('quoteAttr').oninput = function() {
+document.getElementById("quoteAttr").oninput = function() {
   name = this.value;
   renderContent();
 }
 
-document.getElementById('quoteTitle').oninput = function() {
+document.getElementById("quoteTitle").oninput = function() {
   title = this.value;
   renderContent();
 }
 
-document.getElementById('saveButton').addEventListener('click', function() {
-  var dataURL = canvas.toDataURL("image/png");
-  var data = atob(dataURL.substring("data:image/png;base64,".length)),
-    asArray = new Uint8Array(data.length);
-  for (var i = 0, len = data.length; i < len; ++i) {
+document.getElementById("saveButton").addEventListener("click", function() {
+  const dataURL = canvas.toDataURL("image/png");
+  const data = atob(dataURL.substring("data:image/png;base64,".length)),
+    asArray=new Uint8Array(data.length);
+  for (let i = 0, len = data.length; i < len; ++i) {
     asArray[i] = data.charCodeAt(i);
   }
-  var blob = new Blob([asArray.buffer], {
+  const blob = new Blob([asArray.buffer], {
     type: "image/png"
   });
   saveAs(blob, "quote.png");
@@ -228,90 +146,44 @@ document.getElementById('saveButton').addEventListener('click', function() {
 
 // EVENT HANDLERS
 
-// Toggle Attribution
-var toggleAttrCheckbox = document.getElementById('toggleAttribution');
-toggleAttrCheckbox.addEventListener('click', function() {
+// Toggle attribution
+const toggleAttrCheckbox = document.getElementById("toggleAttribution");
+toggleAttrCheckbox.addEventListener("click", function() {
 	showAttribution = !showAttribution;
 	renderContent();
 });
 
-// Toggle Attribution Title
-var toggleAttrTitleCheckbox = document.getElementById('toggleAttributionTitle');
-toggleAttrTitleCheckbox.addEventListener('click', function() {
+// Toggle attribution title
+const toggleAttrTitleCheckbox = document.getElementById("toggleAttributionTitle");
+toggleAttrTitleCheckbox.addEventListener("click", function() {
 	showAttributionTitle = !showAttributionTitle;
-  name = document.getElementById('quoteAttr').value || "Amy Gutmann";
+  name = document.getElementById("quoteAttr").value || "First Last";
 	renderContent();
 });
 
-// Toggle Center Elements
-var toggleCenterCheckbox = document.getElementById('centerElements');
-toggleCenterCheckbox.addEventListener('click', function() {
+// Toggle center elements
+const toggleCenterCheckbox = document.getElementById("centerElements");
+toggleCenterCheckbox.addEventListener("click", function() {
 	centerElements = !centerElements;
 	renderContent();
 });
 
-// Toggle Inverse Colors
-var toggleColorsCheckbox = document.getElementById('inverseColors');
-toggleColorsCheckbox.addEventListener('click', function() {
-	inverseColors = !inverseColors;
+// Change selected background/color scheme
+const backgroundColor = document.getElementById("backgroundColor");
+backgroundColor.addEventListener("change", function() {
 	renderContent();
 });
 
-// Change Selected Publication
-var publicationSelect = document.getElementById('publicationSelect');
-publicationSelect.addEventListener('change', function() {
-  // wordmark and sports are only available for DP
-  if (document.getElementById('publicationSelect').selectedIndex != 0) {
-    document.getElementById('useWordmark').disabled = true;
-    document.getElementById('useWordmark').checked = false;
-    useWordmark = false;
-    document.getElementById('useSports').disabled = true;
-    document.getElementById('useSports').checked = false;
-    useSports = false;
-  } else {
-    document.getElementById('useWordmark').disabled = false;
-    document.getElementById('useSports').disabled = false;
-  }
-	renderContent();
-});
-
-// Toggle Wordmark
-var useWordmarkCheckbox = document.getElementById('useWordmark');
-useWordmarkCheckbox.addEventListener('click', function() {
+// Toggle wordmark
+const useWordmarkCheckbox = document.getElementById("useWordmark");
+useWordmarkCheckbox.addEventListener("click", function() {
   useWordmark = !useWordmark;
 	renderContent();
 });
 
-// Toggle Sports Logo
-var useSportsCheckbox = document.getElementById('useSports');
-useSportsCheckbox.addEventListener('click', function() {
-  useSports = !useSports;
-	renderContent();
-});
-
-// Include Photo
-var togglePictureCheckbox = document.getElementById('togglePicture');
-togglePictureCheckbox.addEventListener('click', function() {
-  includePhoto = !includePhoto;
-	renderContent();
-});
-
-// Upload Picture
-var uploadPicture = document.getElementById('uploadPicture');
-var fileInput = document.getElementById('fileInput');
-uploadPicture.addEventListener('click', function() {
-  fileInput.click();
-});
-fileInput.addEventListener('change', function() {
-  if (this.files && this.files[0]) {
-    photoURL = URL.createObjectURL(this.files[0]);
-  }
-  renderContent();
-});
-
 // Include logo
-var toggleLogoCheckbox = document.getElementById('toggleLogo');
-toggleLogoCheckbox.addEventListener('click', function() {
+const toggleLogoCheckbox = document.getElementById("toggleLogo");
+toggleLogoCheckbox.addEventListener("click", function() {
   includeLogo = !includeLogo;
   renderContent();
 });

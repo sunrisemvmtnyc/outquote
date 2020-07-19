@@ -10,11 +10,16 @@ let includePhoto = false;
 let photoURL = "";
 
 const PRIMARY = "#FFDE16";
-const BACKGROUNDS = ["#33342E", "#FD9014"];
+const BACKGROUNDS = ["#33342E", "gradient"];
+const GRADIENT = ["#EF4C39", "#FD9014", "#FFDE16"];
 const TEXT_COLORS = ["#FFDE16", "#33342E"]
 const LOGOS = ["logos/logo-yellow.svg", "logos/logo-gray.svg"];
 const TEXT_LOGOS = ["logos/text-yellow.svg", "logos/text-gray.svg"];
 
+/*
+ * Correctly wraps the quote text by adding each word, checking if it fits
+ * within the given maximum width, and adding a newline if not.
+ */
 const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
   const words = text.split(" ");
   let line = "";
@@ -34,21 +39,34 @@ const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
   return y;
 }
 
+/*
+ * This the main function; it goes through all of the various options and
+ * renders based on how the user has selected them.
+ */
 const renderContent = () => {
   const canvas = document.getElementById("canvas");
+  // TODO: abstract these into options for different platforms
   canvas.width = 1000;
   canvas.height = 500;
 
   // the background drop down is used to determine the color scheme
   const scheme = document.getElementById("backgroundColor").selectedIndex;
+  const hasGradient = BACKGROUNDS[scheme] == "gradient";
 
   // use the primary color for the outline
   const quoteCtx = canvas.getContext("2d");
-  quoteCtx.crossorigin = "Anonymous";
   quoteCtx.fillStyle = PRIMARY;
   quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
+
   // then fill the background with the selection
-  quoteCtx.fillStyle = BACKGROUNDS[scheme];
+  const gradient = quoteCtx.createLinearGradient(
+    canvas.width / 2, 0, canvas.width / 2, canvas.height);
+  if (hasGradient) {
+    gradient.addColorStop(0, GRADIENT[0]);
+    gradient.addColorStop(0.5, GRADIENT[1]);
+    gradient.addColorStop(1, GRADIENT[2]);
+  }
+  quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
   quoteCtx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
 
   quoteCtx.font = "400 38px source sans pro";
@@ -69,9 +87,9 @@ const renderContent = () => {
     const image = new Image();
     image.onload = () => {
       const aspect = image.width / image.height;
-      const width = 50 * aspect;
+      const width = 80 * aspect;
       quoteCtx.drawImage(image, centerElements ? (canvas.width - width) / 2 + 10 : canvas.width - width - 50, 50,
-        width, 50);
+        width, 80);
     }
     image.src = useWordmark ? TEXT_LOGOS[scheme] : LOGOS[scheme];
   }
@@ -82,7 +100,7 @@ const renderContent = () => {
     const titleCtx = canvas.getContext("2d");
 
     // set the nameCtx font to get correct width measurement
-    nameCtx.font = showAttributionTitle ? "700 38px source sans pro" : "400 38px source sans pro";
+    nameCtx.font = "700 38px source sans pro";
 
     const nameLength = showAttributionTitle ? nameCtx.measureText(name + " | ").width : nameCtx.measureText(name).width;
     const titleLength = titleCtx.measureText(title).width;

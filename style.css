@@ -1,22 +1,12 @@
 body {
   overflow-x: hidden;
+  font-family: "source sans pro";
+}
+
+h2 {
+  margin-top: 2rem;
 }
 
 #canvas {
   transform-origin: 0 0;
-  transform: scale(0.96);
-}
-
-@media (max-width: 1000px) {
-  #canvas {
-    transform: scale(0.6);
-    margin-bottom: -180px;
-  }
-}
-
-@media (max-width: 500px) {
-  #canvas {
-    transform: scale(0.33);
-    margin-bottom: -300px;
-  }
 }

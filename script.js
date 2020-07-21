@@ -2,7 +2,7 @@ let quote = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do ei
 let name = "First Last";
 let title = "Position";
 let showAttribution = true;
-let showAttributionTitle = true;
+let showTitle = true;
 let includeLogo = true;
 let centerElements = false;
 let useWordmark = false;
@@ -15,27 +15,40 @@ const GRADIENT = ["#EF4C39", "#FD9014", "#FFDE16"];
 const TEXT_COLORS = ["#FFDE16", "#33342E"]
 const LOGOS = ["logos/logo-yellow.svg", "logos/logo-gray.svg"];
 const TEXT_LOGOS = ["logos/text-yellow.svg", "logos/text-gray.svg"];
+const LOGO_HEIGHT = [160, 160, 80]
+const FONT_SIZE = [80, 80, 40];
+const SIZES = [
+  [1080, 1080], // instagram post
+  [1080, 1920], // instagram story
+  [1024, 512] // twitter/facebook
+];
+const BORDERS = [25, 25, 10];
+const MARGINS = [100, 100, 50];
 
 /*
  * Correctly wraps the quote text by adding each word, checking if it fits
  * within the given maximum width, and adding a newline if not.
  */
 const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
-  const words = text.split(" ");
-  let line = "";
+  const grafs = text.split("\n");
+  for (let graf of grafs) {
+    const words = graf.split(" ");
+    let line = "";
 
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + " ";
-    const metrics = context.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      context.fillText(line, x, y);
-      line = words[n] + " ";
-      y += lineHeight;
-    } else {
-      line = testLine;
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + " ";
+      const metrics = context.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        context.fillText(line, x, y);
+        line = words[n] + " ";
+        y += lineHeight;
+      } else {
+        line = testLine;
+      }
     }
+    context.fillText(line, x, y);
+    y += lineHeight;
   }
-  context.fillText(line, x, y);
   return y;
 }
 
@@ -45,9 +58,17 @@ const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
  */
 const renderContent = () => {
   const canvas = document.getElementById("canvas");
-  // TODO: abstract these into options for different platforms
-  canvas.width = 1000;
-  canvas.height = 500;
+
+  // resize the canvas based on the selected social media platform
+  const size = document.getElementById("canvasSize").selectedIndex;
+  canvas.width = SIZES[size][0];
+  canvas.height = SIZES[size][1];
+
+  // the container's max width is 960, so divide by width for twitter/fb to fit
+  const aspect = (960 / 1024) / 2;
+  const transformAspect = aspect * (canvas.width / canvas.height);
+  canvas.style.transform = `scale(${transformAspect})`;
+  canvas.style.marginBottom = `-${canvas.height * (1 - transformAspect)}px`;
 
   // the background drop down is used to determine the color scheme
   const scheme = document.getElementById("backgroundColor").selectedIndex;
@@ -67,29 +88,45 @@ const renderContent = () => {
     gradient.addColorStop(1, GRADIENT[2]);
   }
   quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
-  quoteCtx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
+  quoteCtx.fillRect(BORDERS[size],
+    BORDERS[size],
+    canvas.width - BORDERS[size] * 2,
+    canvas.height - BORDERS[size] * 2
+  );
 
-  quoteCtx.font = "400 38px source sans pro";
+  quoteCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
   quoteCtx.fillStyle = TEXT_COLORS[scheme];
 
   if (centerElements) {
     quoteCtx.textAlign = "center";
   }
 
-  // render elements
-  const quoteBottomSpacing = (showAttribution ? 0 : -20)
-    + (includeLogo ? 50 : 120) + (!showAttribution && !includeLogo ? 40 : 0);
-  wrapText(quoteCtx, "\“" + quote + "\”", centerElements ? 500 : 50,
-    canvas.height / 2 - quoteBottomSpacing, 800, 48);
+  // render quote text
+  const adjustQuoteHeight =
+    BORDERS[size] +
+    MARGINS[size] +
+    (includeLogo ? LOGO_HEIGHT[size] + MARGINS[size] : 0);
+  // TODO: make ths math work better for quotes of different lengths
+  // maybe set the height after we know how many lines it'll be?
+  wrapText(
+    quoteCtx,
+    "\“" + quote + "\”",
+    centerElements ? canvas.width / 2 : MARGINS[size],
+    adjustQuoteHeight,
+    canvas.width - MARGINS[size] * 2,
+    FONT_SIZE[size] + 10
+  );
 
   // load logo
   if (includeLogo) {
     const image = new Image();
     image.onload = () => {
-      const aspect = image.width / image.height;
-      const width = 80 * aspect;
-      quoteCtx.drawImage(image, centerElements ? (canvas.width - width) / 2 + 10 : canvas.width - width - 50, 50,
-        width, 80);
+      const height = useWordmark ? LOGO_HEIGHT[size] * 0.7 : LOGO_HEIGHT[size];
+      const width = height * (image.width / image.height);
+      const xPos = centerElements ?
+        (canvas.width - width) / 2 :
+        canvas.width - width - MARGINS[size];
+      quoteCtx.drawImage(image, xPos, MARGINS[size], width, height);
     }
     image.src = useWordmark ? TEXT_LOGOS[scheme] : LOGOS[scheme];
   }
@@ -100,25 +137,28 @@ const renderContent = () => {
     const titleCtx = canvas.getContext("2d");
 
     // set the nameCtx font to get correct width measurement
-    nameCtx.font = "700 38px source sans pro";
+    nameCtx.font = `700 ${FONT_SIZE[size]}px source sans pro`;
 
-    const nameLength = showAttributionTitle ? nameCtx.measureText(name + " | ").width : nameCtx.measureText(name).width;
+    const nameLength = showTitle ?
+      nameCtx.measureText(name + " | ").width :
+      nameCtx.measureText(name).width;
     const titleLength = titleCtx.measureText(title).width;
 
-    const centerPos = (showAttributionTitle) ? canvas.width / 2 - nameLength / 2 - titleLength / 2 : canvas.width / 2 - nameLength / 2;
-    const nameCtxX = centerElements ? centerPos : 50;
+    const centerPos = showTitle ?
+      canvas.width / 2 - nameLength / 2 - titleLength / 2 :
+      canvas.width / 2 - nameLength / 2;
+    const nameCtxX = centerElements ? centerPos : MARGINS[size];
     const titleCtxX = nameLength + nameCtxX;
+    const yPos = canvas.height - MARGINS[size] - BORDERS[size];
 
     // fill name text
     nameCtx.fillStyle = TEXT_COLORS[scheme];
-    nameCtx.fillText(showAttributionTitle ? name + " | " : name, nameCtxX,
-      canvas.height - (includeLogo ? 70 : 120) + (!includeLogo && showAttribution ? 50 : 0));
+    nameCtx.fillText(showTitle ? name + " | " : name, nameCtxX, yPos);
 
     // fill title text
-    if (showAttributionTitle) {
-      titleCtx.font = "400 38px source sans pro";
-      titleCtx.fillText(title, titleCtxX, canvas.height - (includeLogo ? 70 : 120)
-        + (!includeLogo && showAttribution ? 50 : 0));
+    if (showTitle) {
+      titleCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
+      titleCtx.fillText(title, titleCtxX, yPos);
     }
 	}
 }
@@ -164,6 +204,12 @@ document.getElementById("saveButton").addEventListener("click", function() {
 
 // EVENT HANDLERS
 
+// Change selected canvas size
+const canvasSize = document.getElementById("canvasSize");
+canvasSize.addEventListener("change", function() {
+	renderContent();
+});
+
 // Toggle attribution
 const toggleAttrCheckbox = document.getElementById("toggleAttribution");
 toggleAttrCheckbox.addEventListener("click", function() {
@@ -174,7 +220,7 @@ toggleAttrCheckbox.addEventListener("click", function() {
 // Toggle attribution title
 const toggleAttrTitleCheckbox = document.getElementById("toggleAttributionTitle");
 toggleAttrTitleCheckbox.addEventListener("click", function() {
-	showAttributionTitle = !showAttributionTitle;
+	showTitle = !showTitle;
   name = document.getElementById("quoteAttr").value || "First Last";
 	renderContent();
 });

@@ -20,7 +20,7 @@ const FONT_SIZE = [60, 80, 40];
 const SIZES = [
   [1080, 1080], // instagram post
   [1080, 1920], // instagram story
-  [1024, 512] // twitter/facebook
+  [1280, 640] // twitter/facebook
 ];
 const BORDERS = [25, 25, 10];
 const MARGINS = [100, 100, 50];
@@ -92,7 +92,7 @@ const renderContent = () => {
   // calculate the amount we should transform by
   let aspect = containerWidth / canvas.width;
   // on desktop, reduce the size of insta posts/stories so they're not so tall
-  if (containerWidth == MAX_WIDTH && containerWidth < canvas.height) {
+  if (containerWidth > 700 && containerWidth < canvas.height) {
     aspect /= 2;
     aspect *= (canvas.width / canvas.height);
   }
@@ -231,11 +231,12 @@ document.getElementById("saveButton").addEventListener("click", function() {
 
 // EVENT HANDLERS
 
+// Resize window
+window.addEventListener("resize", renderContent);
+
 // Change selected canvas size
 const canvasSize = document.getElementById("canvasSize");
-canvasSize.addEventListener("change", function() {
-	renderContent();
-});
+canvasSize.addEventListener("change", renderContent);
 
 // Toggle attribution
 const toggleAttrCheckbox = document.getElementById("toggleAttribution");
@@ -261,9 +262,7 @@ toggleCenterCheckbox.addEventListener("click", function() {
 
 // Change selected background/color scheme
 const backgroundColor = document.getElementById("backgroundColor");
-backgroundColor.addEventListener("change", function() {
-	renderContent();
-});
+backgroundColor.addEventListener("change", renderContent);
 
 // Toggle wordmark
 const useWordmarkCheckbox = document.getElementById("useWordmark");

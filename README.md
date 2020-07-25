@@ -2,7 +2,7 @@
 
 Used at Sunrise NYC for quick quote cards to put on our various social media platforms. Forked from [The Daily Pennsylvanian](https://github.com/dailypenn/outquote).
 
-## Updates from the parent repo:
+## Updates from the parent repo
 
 - [x] Replace colors, fonts, and logos with Sunrise NYC's
 - [x] Remove unnecessary options

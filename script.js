@@ -16,7 +16,7 @@ const TEXT_COLORS = ["#FFDE16", "#33342E"]
 const LOGOS = ["logos/logo-yellow.svg", "logos/logo-gray.svg"];
 const TEXT_LOGOS = ["logos/text-yellow.svg", "logos/text-gray.svg"];
 const LOGO_HEIGHT = [160, 160, 80]
-const FONT_SIZE = [80, 80, 40];
+const FONT_SIZE = [60, 80, 40];
 const SIZES = [
   [1080, 1080], // instagram post
   [1080, 1920], // instagram story
@@ -27,10 +27,14 @@ const MARGINS = [100, 100, 50];
 
 /*
  * Correctly wraps the quote text by adding each word, checking if it fits
- * within the given maximum width, and adding a newline if not.
+ * within the given maximum width, and adding a newline if not. After wrapping
+ * the text, calculates the height at which it should start to be vertically
+ * centered and fills the text.
  */
-const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
+const wrapText = (context, text, x, maxWidth, lineHeight, canvasHeight) => {
   const grafs = text.split("\n");
+  let y = 0;
+  const textToFill = [];
   for (let graf of grafs) {
     const words = graf.split(" ");
     let line = "";
@@ -39,16 +43,27 @@ const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
       const testLine = line + words[n] + " ";
       const metrics = context.measureText(testLine);
       if (metrics.width > maxWidth && n > 0) {
-        context.fillText(line, x, y);
+        textToFill.push([line, x, y]);
         line = words[n] + " ";
         y += lineHeight;
       } else {
         line = testLine;
       }
     }
-    context.fillText(line, x, y);
+    textToFill.push([line, x, y]);
     y += lineHeight;
   }
+
+  // subtract the last lineHeight and calculate adjusted height to center text
+  y -= lineHeight;
+  const adjustedHeight = canvasHeight / 2 - y / 2;
+
+  // fill text with adjusted y values
+  textToFill.forEach(item => {
+    [line, x, y] = [...item];
+    context.fillText(line, x, y + adjustedHeight);
+  });
+
   return y;
 }
 
@@ -57,18 +72,36 @@ const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
  * renders based on how the user has selected them.
  */
 const renderContent = () => {
-  const canvas = document.getElementById("canvas");
+  // get the container's width to use in sizing calculations
+  const container = document.getElementById("container");
+  let containerWidth = container.offsetWidth;
+  if (containerWidth < 400) {
+    // subtract 40 for the container's padding (20px on left and right)
+    containerWidth -= 40;
+  }
+  // the container's max width is 960, so get whichever is smaller
+  const MAX_WIDTH = 960;
+  containerWidth = Math.min(containerWidth, MAX_WIDTH);
 
   // resize the canvas based on the selected social media platform
+  const canvas = document.getElementById("canvas");
   const size = document.getElementById("canvasSize").selectedIndex;
   canvas.width = SIZES[size][0];
   canvas.height = SIZES[size][1];
 
-  // the container's max width is 960, so divide by width for twitter/fb to fit
-  const aspect = (960 / 1024) / 2;
-  const transformAspect = aspect * (canvas.width / canvas.height);
-  canvas.style.transform = `scale(${transformAspect})`;
-  canvas.style.marginBottom = `-${canvas.height * (1 - transformAspect)}px`;
+  // calculate the amount we should transform by
+  let aspect = containerWidth / canvas.width;
+  // on desktop, reduce the size of insta posts/stories so they're not so tall
+  if (containerWidth == MAX_WIDTH && containerWidth < canvas.height) {
+    aspect /= 2;
+    aspect *= (canvas.width / canvas.height);
+  }
+  canvas.style.transform = `scale(${aspect})`;
+
+  // adjust the size of the canvas's container so we don't get any extra scroll
+  const canvasRow = document.getElementById("canvasRow");
+  canvasRow.style.width = `${canvas.width * aspect}px`;
+  canvasRow.style.height = `${canvas.height * aspect}px`;
 
   // the background drop down is used to determine the color scheme
   const scheme = document.getElementById("backgroundColor").selectedIndex;
@@ -102,19 +135,13 @@ const renderContent = () => {
   }
 
   // render quote text
-  const adjustQuoteHeight =
-    BORDERS[size] +
-    MARGINS[size] +
-    (includeLogo ? LOGO_HEIGHT[size] + MARGINS[size] : 0);
-  // TODO: make ths math work better for quotes of different lengths
-  // maybe set the height after we know how many lines it'll be?
   wrapText(
     quoteCtx,
     "\“" + quote + "\”",
     centerElements ? canvas.width / 2 : MARGINS[size],
-    adjustQuoteHeight,
     canvas.width - MARGINS[size] * 2,
-    FONT_SIZE[size] + 10
+    FONT_SIZE[size] + 10,
+    canvas.height
   );
 
   // load logo

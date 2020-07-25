@@ -7,6 +7,12 @@ h2 {
   margin-top: 2rem;
 }
 
+#canvasRow {
+  position: relative;
+  margin-bottom: 10px;
+}
+
 #canvas {
+  position: absolute;
   transform-origin: 0 0;
 }

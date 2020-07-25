@@ -2,8 +2,11 @@
 
 Used at Sunrise NYC for quick quote cards to put on our various social media platforms. Forked from [The Daily Pennsylvanian](https://github.com/dailypenn/outquote).
 
-## TODO
+## Updates from the parent repo:
 
-- [x] Remove DP-specific colors, fonts, and logos; replace with those of Sunrise
+- [x] Replace colors, fonts, and logos with Sunrise NYC's
 - [x] Remove unnecessary options
-- [ ] Add ability to change canvas size for Instagram stories, posts, etc.
+- [x] Add ability to change canvas size for different social media platforms
+- [ ] Add font size options or change size dynamically based on quote length
+
+Let Alex know if there's any other desired features!

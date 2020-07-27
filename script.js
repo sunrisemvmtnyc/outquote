@@ -28,12 +28,12 @@ const MAX_CONTAINER_WIDTH = 960;
  * Correctly wraps the quote text by adding each word, checking if it fits
  * within the given maximum width, and adding a newline if not. After wrapping
  * the text, calculates the height at which it should start to be vertically
- * centered and fills the text.
+ * centered and fills the text. This method can also vertically center the text
+ * (used for quote fill but not attribution fill).
  */
-const wrapText = (context, text, x, maxWidth, lineHeight, canvasHeight) => {
+const wrapText = (context, text, maxW, maxH, lineH, x, y, vCenter) => {
   const grafs = text.split("\n");
   const textToFill = [];
-  let y = 0;
   for (let graf of grafs) {
     const words = graf.split(" ");
     let line = "";
@@ -41,21 +41,21 @@ const wrapText = (context, text, x, maxWidth, lineHeight, canvasHeight) => {
     for (let n = 0; n < words.length; n++) {
       const testLine = line + words[n] + " ";
       const metrics = context.measureText(testLine);
-      if (metrics.width > maxWidth && n > 0) {
+      if (metrics.width > maxW && n > 0) {
         textToFill.push([line, x, y]);
         line = words[n] + " ";
-        y += lineHeight;
+        y += lineH;
       } else {
         line = testLine;
       }
     }
     textToFill.push([line, x, y]);
-    y += lineHeight;
+    y += lineH;
   }
 
-  // subtract the last lineHeight and calculate adjusted height to center text
-  y -= lineHeight;
-  const adjustedHeight = (canvasHeight - y) / 2;
+  // subtract the last line height and calculate adjusted height to center text
+  y -= lineH;
+  const adjustedHeight = vCenter ? (maxH - y) / 2 : 0;
 
   // fill text with adjusted y values
   textToFill.forEach(item => {
@@ -130,13 +130,18 @@ const render = () => {
   }
 
   // render quote text
+  const LINE_H = FONT_SIZE[size] + 10;
+  const MAX_W = canvas.width - MARGINS[size] * 2;
+  const MAX_H = canvas.height;
   wrapText(
     quoteCtx,
     "\“" + quote + "\”",
+    MAX_W,
+    MAX_H,
+    LINE_H,
     centerElements ? half : MARGINS[size],
-    canvas.width - MARGINS[size] * 2,
-    FONT_SIZE[size] + 10,
-    canvas.height
+    0,
+    true
   );
 
   // load logo
@@ -160,27 +165,36 @@ const render = () => {
 
     // set the nameCtx font to get correct width measurement
     nameCtx.font = `700 ${FONT_SIZE[size]}px source sans pro`;
+    nameCtx.fillStyle = TEXT_COLORS[scheme];
 
-    const nameLength = showTitle ?
-      nameCtx.measureText(name + " | ").width :
-      nameCtx.measureText(name).width;
-    const titleLength = titleCtx.measureText(title).width;
+    let nameText = showTitle ? name + " | " : name;
+    const nameLength = nameCtx.measureText(nameText).width;
+    const titleLength = showTitle ? titleCtx.measureText(title).width : 0;
 
-    const centerPos = showTitle ?
-      half - nameLength / 2 - titleLength / 2 :
-      half - nameLength / 2;
-    const nameCtxX = centerElements ? centerPos : MARGINS[size];
-    const titleCtxX = nameLength + nameCtxX;
-    const yPos = canvas.height - MARGINS[size] - BORDERS[size];
+    // if the attribution and/or title are more than one line, adjust positions
+    const lines = Math.floor((nameLength + titleLength) / MAX_W);
+    const xPos = centerElements ? half : MARGINS[size];
+    const yPos = canvas.height - MARGINS[size] - lines * LINE_H;
+
+    if (centerElements) {
+      nameCtx.textAlign = "center";
+      titleCtx.textAlign = "center";
+      // TODO: this is a bit hacky and on really long text doesn't quite work
+      // (the reason is because spaces break differently on the lines than text)
+      const count = Math.round(titleLength / nameCtx.measureText(" ").width);
+      nameText += " ".repeat(count);
+    }
 
     // fill name text
-    nameCtx.fillStyle = TEXT_COLORS[scheme];
-    nameCtx.fillText(showTitle ? name + " | " : name, nameCtxX, yPos);
+    wrapText(nameCtx, nameText, MAX_W, MAX_H, LINE_H, xPos, yPos, false);
 
     // fill title text
     if (showTitle) {
       titleCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
-      titleCtx.fillText(title, titleCtxX, yPos);
+      // TODO: this is a bit hacky right now
+      const count = Math.round(nameLength / titleCtx.measureText(" ").width);
+      const text = " ".repeat(count) + title;
+      wrapText(titleCtx, text, MAX_W, MAX_H, LINE_H, xPos, yPos, false);
     }
   }
 }

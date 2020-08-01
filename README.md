@@ -9,4 +9,10 @@ Used at Sunrise NYC for quick quote cards to put on our various social media pla
 - [x] Add ability to change canvas size for different social media platforms
 - [ ] Add font size options or change size dynamically based on quote length
 
+## New features for style guide v3
+- [x] Purple-to-orange gradient
+- [x] Full gradient (purple to yellow)
+- [ ] Border with logo in corner
+- [ ] Sun rays
+
 Let Alex know if there's any other desired features!

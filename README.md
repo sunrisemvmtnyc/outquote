@@ -15,4 +15,9 @@ Used at Sunrise NYC for quick quote cards to put on our various social media pla
 - [ ] Border with logo in corner
 - [ ] Sun rays
 
+## Future features
+- [ ] Image/cutout overlay
+- [ ] Background image
+- [ ] Integration with Google Drive for image selection
+
 Let Alex know if there's any other desired features!

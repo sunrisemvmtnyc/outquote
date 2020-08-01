@@ -7,12 +7,25 @@ let includeLogo = true;
 let centerElements = false;
 let useWordmark = false;
 
-const PRIMARY = "#FFDE16";
-const BACKGROUNDS = ["#33342E", "gradient"];
-const GRADIENT = ["#EF4C39", "#FD9014", "#FFDE16"];
-const TEXT_COLORS = ["#FFDE16", "#33342E"]
-const LOGOS = ["logos/logo-yellow.svg", "logos/logo-gray.svg"];
-const TEXT_LOGOS = ["logos/text-yellow.svg", "logos/text-gray.svg"];
+const PRIMARY = ["#FFDE16", "#33342E", "#E3EDDF", "#33342E"];
+const BACKGROUNDS = [
+  ["#33342E"],
+  ["#EF4C39", "#FD9014", "#FFDE16"],
+  ["#8F0D56", "#EF4C39", "#FD9014"],
+  ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
+];
+const LOGOS = [
+  "logos/logo-yellow.svg",
+  "logos/logo-gray.svg",
+  "logos/logo-white.svg",
+  "logos/logo-gray.svg"
+];
+const TEXT_LOGOS = [
+  "logos/text-yellow.svg",
+  "logos/text-gray.svg",
+  "logos/text-white.svg",
+  "logos/text-gray.svg"
+];
 const LOGO_HEIGHT = [160, 160, 80]
 const FONT_SIZE = [60, 80, 40];
 const SIZES = [
@@ -20,8 +33,8 @@ const SIZES = [
   [1080, 1920], // instagram story
   [1280, 640] // twitter/facebook
 ];
-const BORDERS = [25, 25, 10];
-const MARGINS = [100, 100, 50];
+const BORDERS = [10, 10, 8];
+const MARGINS = [100, 100, 60];
 const MAX_CONTAINER_WIDTH = 960;
 
 /*
@@ -99,31 +112,35 @@ const render = () => {
 
   // the background drop down is used to determine the color scheme
   const scheme = document.getElementById("backgroundColor").selectedIndex;
-  const hasGradient = BACKGROUNDS[scheme] == "gradient";
+  const hasGradient = BACKGROUNDS[scheme].length > 1;
 
-  // use the primary color for the outline
+  // fill the background with the selection
   const quoteCtx = canvas.getContext("2d");
-  quoteCtx.fillStyle = PRIMARY;
-  quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // then fill the background with the selection
   const half = canvas.width / 2;
   const gradient = quoteCtx.createLinearGradient(half, 0, half, canvas.height);
   if (hasGradient) {
-    gradient.addColorStop(0, GRADIENT[0]);
-    gradient.addColorStop(0.5, GRADIENT[1]);
-    gradient.addColorStop(1, GRADIENT[2]);
+    const stops = BACKGROUNDS[scheme].length - 1;
+    BACKGROUNDS[scheme].forEach((color, i) => {
+      gradient.addColorStop(i / stops, color);
+    });
   }
   quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
-  quoteCtx.fillRect(
-    BORDERS[size],
-    BORDERS[size],
-    canvas.width - BORDERS[size] * 2,
-    canvas.height - BORDERS[size] * 2
+  quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // then draw the border over it
+  quoteCtx.strokeStyle = PRIMARY[scheme];
+  quoteCtx.lineWidth = BORDERS[size];
+  quoteCtx.beginPath();
+  quoteCtx.rect(
+    MARGINS[size] / 2,
+    MARGINS[size] / 2,
+    canvas.width - MARGINS[size],
+    canvas.height - MARGINS[size]
   );
+  quoteCtx.stroke();
 
   quoteCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
-  quoteCtx.fillStyle = TEXT_COLORS[scheme];
+  quoteCtx.fillStyle = PRIMARY[scheme];
 
   if (centerElements) {
     quoteCtx.textAlign = "center";
@@ -165,7 +182,7 @@ const render = () => {
 
     // set the nameCtx font to get correct width measurement
     nameCtx.font = `700 ${FONT_SIZE[size]}px source sans pro`;
-    nameCtx.fillStyle = TEXT_COLORS[scheme];
+    nameCtx.fillStyle = PRIMARY[scheme];
 
     let nameText = showTitle ? name + " | " : name;
     const nameLength = nameCtx.measureText(nameText).width;

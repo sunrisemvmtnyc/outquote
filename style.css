@@ -7,6 +7,14 @@ h2 {
   margin-top: 2rem;
 }
 
+a {
+  text-decoration: none;
+}
+
+.center {
+  text-align: center;
+}
+
 #canvasRow {
   position: relative;
   margin-bottom: 10px;

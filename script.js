@@ -4,6 +4,7 @@ let title = "Title";
 let showAttribution = true;
 let showTitle = true;
 let includeLogo = true;
+let splitAttribution = false;
 let centerElements = false;
 let useWordmark = false;
 
@@ -184,22 +185,27 @@ const render = () => {
     nameCtx.font = `700 ${FONT_SIZE[size]}px source sans pro`;
     nameCtx.fillStyle = PRIMARY[scheme];
 
-    let nameText = showTitle ? name + " | " : name;
+    let nameText = showTitle && !splitAttribution ? name + " | " : name;
     const nameLength = nameCtx.measureText(nameText).width;
     const titleLength = showTitle ? titleCtx.measureText(title).width : 0;
 
     // if the attribution and/or title are more than one line, adjust positions
-    const lines = Math.floor((nameLength + titleLength) / MAX_W);
+    const lines = splitAttribution ?
+      Math.floor(nameLength / MAX_W) + Math.ceil(titleLength / MAX_W) :
+      Math.floor((nameLength + titleLength) / MAX_W);
     const xPos = centerElements ? half : MARGINS[size];
     const yPos = canvas.height - MARGINS[size] - lines * LINE_H;
 
     if (centerElements) {
       nameCtx.textAlign = "center";
       titleCtx.textAlign = "center";
-      // TODO: this is a bit hacky and on really long text doesn't quite work
-      // (the reason is because spaces break differently on the lines than text)
-      const count = Math.round(titleLength / nameCtx.measureText(" ").width);
-      nameText += " ".repeat(count);
+      if (!splitAttribution) {
+        // TODO: this is a bit hacky and on really long text doesn't quite work
+        // (the reason is because spaces break differently on the lines than text)
+        // could possibly handle this with non-breaking spaces
+        const count = Math.round(titleLength / nameCtx.measureText(" ").width);
+        nameText += " ".repeat(count);
+      }
     }
 
     // fill name text
@@ -208,10 +214,14 @@ const render = () => {
     // fill title text
     if (showTitle) {
       titleCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
-      // TODO: this is a bit hacky right now
-      const count = Math.round(nameLength / titleCtx.measureText(" ").width);
-      const text = " ".repeat(count) + title;
-      wrapText(titleCtx, text, MAX_W, MAX_H, LINE_H, xPos, yPos, false);
+      if (splitAttribution) {
+        const yPosTitle = yPos + LINE_H;
+        wrapText(titleCtx, title, MAX_W, MAX_H, LINE_H, xPos, yPosTitle, false);
+      } else {
+        const count = Math.round(nameLength / titleCtx.measureText(" ").width);
+        const text = " ".repeat(count) + title;
+        wrapText(titleCtx, text, MAX_W, MAX_H, LINE_H, xPos, yPos, false);
+      }
     }
   }
 }
@@ -269,6 +279,12 @@ document.getElementById("toggleAttribution").addEventListener("click", () => {
 document.getElementById("toggleTitle").addEventListener("click", () => {
   showTitle = !showTitle;
   name = document.getElementById("quoteAttr").value || "First Last";
+  render();
+});
+
+// Toggle split attribution
+document.getElementById("splitAttribution").addEventListener("click", () => {
+  splitAttribution = !splitAttribution;
   render();
 });
 

@@ -7,23 +7,24 @@ let includeLogo = true;
 let splitAttribution = false;
 let centerElements = false;
 let useWordmark = false;
+let includeSunrays = false;
 
-const PRIMARY = ["#FFDE16", "#33342E", "#E3EDDF", "#33342E"];
+const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
 const BACKGROUNDS = [
   ["#33342E"],
-  ["#EF4C39", "#FD9014", "#FFDE16"],
   ["#8F0D56", "#EF4C39", "#FD9014"],
   ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
 ];
+const SUNRAYS = [
+  "sunrays/orange.svg"
+];
 const LOGOS = [
   "logos/logo-yellow.svg",
-  "logos/logo-gray.svg",
   "logos/logo-white.svg",
   "logos/logo-gray.svg"
 ];
 const TEXT_LOGOS = [
   "logos/text-yellow.svg",
-  "logos/text-gray.svg",
   "logos/text-white.svg",
   "logos/text-gray.svg"
 ];
@@ -127,6 +128,18 @@ const render = () => {
   }
   quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
   quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (includeSunrays) {
+    const image = new Image();
+    image.onload = () => {
+      const xPos = 0 - canvas.width / 2;
+      const yPos = 0 - canvas.height / 4;
+      const width = canvas.width * 2;
+      const height = canvas.height - yPos * 1.3;
+      quoteCtx.drawImage(image, xPos, yPos, width, height);
+    }
+    image.src = SUNRAYS[0];
+  }
 
   // then draw the border over it
   quoteCtx.strokeStyle = PRIMARY[scheme];
@@ -296,6 +309,12 @@ document.getElementById("centerElements").addEventListener("click", () => {
 
 // Change selected background/color scheme
 document.getElementById("backgroundColor").addEventListener("change", render);
+
+// Toggle including sunrays
+document.getElementById("includeSunrays").addEventListener("click", () => {
+  includeSunrays = !includeSunrays;
+  render();
+});
 
 // Toggle wordmark
 document.getElementById("useWordmark").addEventListener("click", () => {

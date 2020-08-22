@@ -129,6 +129,8 @@ const render = () => {
   quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
   quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // draw sunrays if included
+  let waitForSunrays = includeSunrays;
   if (includeSunrays) {
     const image = new Image();
     image.onload = () => {
@@ -137,10 +139,21 @@ const render = () => {
       const width = canvas.width * 2;
       const height = canvas.height - yPos * 1.3;
       quoteCtx.drawImage(image, xPos, yPos, width, height);
+      // wait until sunrays have been loaded to draw the foreground
+      renderForeground(canvas, quoteCtx, scheme, size);
     }
     image.src = SUNRAYS[0];
+  } else {
+    renderForeground(canvas, quoteCtx, scheme, size);
   }
+}
 
+/*
+ * Separating the foreground rendering from the background means that the
+ * sunrays won't render over the foreground elements. This renders the border,
+ * logo, quote, and attribution.
+ */
+const renderForeground = (canvas, quoteCtx, scheme, size) => {
   // then draw the border over it
   quoteCtx.strokeStyle = PRIMARY[scheme];
   quoteCtx.lineWidth = BORDERS[size];
@@ -164,6 +177,7 @@ const render = () => {
   const LINE_H = FONT_SIZE[size] + 10;
   const MAX_W = canvas.width - MARGINS[size] * 2;
   const MAX_H = canvas.height;
+  const half = canvas.width / 2;
   wrapText(
     quoteCtx,
     "\“" + quote + "\”",

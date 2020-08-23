@@ -8,6 +8,8 @@ let splitAttribution = false;
 let centerElements = false;
 let useWordmark = false;
 let includeSunrays = false;
+let useBackgroundImage = false;
+let selectedBackgroundImage = 0;
 
 const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
 const BACKGROUNDS = [
@@ -15,6 +17,9 @@ const BACKGROUNDS = [
   ["#8F0D56", "#EF4C39", "#FD9014"],
   ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
 ];
+// background photos are named by numbers; update NUM_BGS when adding new photos
+const NUM_BGS = 27;
+const BG_PHOTOS = [...Array(NUM_BGS).keys()].map(i => `bg-photos/${i+1}.jpg`);
 const SUNRAYS = [
   "sunrays/orange.svg"
 ];
@@ -129,23 +134,65 @@ const render = () => {
   quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
   quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // draw sunrays if included
-  let waitForSunrays = includeSunrays;
-  if (includeSunrays) {
-    const image = new Image();
-    image.onload = () => {
-      const xPos = 0 - canvas.width / 2;
-      const yPos = 0 - canvas.height / 4;
-      const width = canvas.width * 2;
-      const height = canvas.height - yPos * 1.3;
-      quoteCtx.drawImage(image, xPos, yPos, width, height);
-      // wait until sunrays have been loaded to draw the foreground
-      renderForeground(canvas, quoteCtx, scheme, size);
+  // render elements in the correct order
+  renderBackgroundImage([canvas, quoteCtx, scheme, size])
+    .then(renderSunrays)
+    .then(renderForeground);
+}
+
+/*
+ * Render the selected background image. This function returns a promise so that
+ * we can ensure elements are rendered in the correct order.
+ */
+const renderBackgroundImage = (args) => {
+  [canvas, quoteCtx, scheme, size] = [...args];
+  return new Promise(resolve => {
+    if (useBackgroundImage) {
+      const image = new Image();
+      image.onload = () => {
+        // TODO: scale images properly so they take up the entire width/height
+        const xPos = 0 - canvas.width / 2;
+        const yPos = 0 - canvas.height / 4;
+        const width = canvas.width * 2;
+        const height = canvas.height - yPos * 1.3;
+        // TODO: what blend mode should we use?
+        quoteCtx.globalCompositeOperation = "multiply";
+        quoteCtx.drawImage(image, xPos, yPos, width, height);
+        quoteCtx.globalCompositeOperation = "source-over";
+        // resolve (draw sunrays) after loading the image
+        resolve(args);
+      }
+      // TODO: allow users to select the background image
+      image.src = BG_PHOTOS[selectedBackgroundImage];
+    } else {
+      resolve(args);
     }
-    image.src = SUNRAYS[0];
-  } else {
-    renderForeground(canvas, quoteCtx, scheme, size);
-  }
+  });
+}
+
+/*
+ * Render sunrays. This function returns a promise so that we can ensure
+ * elements are rendered in the correct order.
+ */
+const renderSunrays = (args) => {
+  return new Promise(resolve => {
+    [canvas, quoteCtx, scheme, size] = [...args];
+    if (includeSunrays) {
+      const image = new Image();
+      image.onload = () => {
+        const xPos = 0 - canvas.width / 2;
+        const yPos = 0 - canvas.height / 4;
+        const width = canvas.width * 2;
+        const height = canvas.height - yPos * 1.3;
+        quoteCtx.drawImage(image, xPos, yPos, width, height);
+        // resolve (draw foreground) after loading the image
+        resolve(args);
+      }
+      image.src = SUNRAYS[0];
+    } else {
+      resolve(args);
+    }
+  });
 }
 
 /*
@@ -153,7 +200,8 @@ const render = () => {
  * sunrays won't render over the foreground elements. This renders the border,
  * logo, quote, and attribution.
  */
-const renderForeground = (canvas, quoteCtx, scheme, size) => {
+const renderForeground = (args) => {
+  [canvas, quoteCtx, scheme, size] = [...args];
   // then draw the border over it
   quoteCtx.strokeStyle = PRIMARY[scheme];
   quoteCtx.lineWidth = BORDERS[size];
@@ -327,6 +375,12 @@ document.getElementById("backgroundColor").addEventListener("change", render);
 // Toggle including sunrays
 document.getElementById("includeSunrays").addEventListener("click", () => {
   includeSunrays = !includeSunrays;
+  render();
+});
+
+// Toggle using background image
+document.getElementById("useBackgroundImage").addEventListener("click", () => {
+  useBackgroundImage = !useBackgroundImage;
   render();
 });
 

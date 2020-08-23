@@ -7,23 +7,24 @@ let includeLogo = true;
 let splitAttribution = false;
 let centerElements = false;
 let useWordmark = false;
+let includeSunrays = false;
 
-const PRIMARY = ["#FFDE16", "#33342E", "#E3EDDF", "#33342E"];
+const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
 const BACKGROUNDS = [
   ["#33342E"],
-  ["#EF4C39", "#FD9014", "#FFDE16"],
   ["#8F0D56", "#EF4C39", "#FD9014"],
   ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
 ];
+const SUNRAYS = [
+  "sunrays/orange.svg"
+];
 const LOGOS = [
   "logos/logo-yellow.svg",
-  "logos/logo-gray.svg",
   "logos/logo-white.svg",
   "logos/logo-gray.svg"
 ];
 const TEXT_LOGOS = [
   "logos/text-yellow.svg",
-  "logos/text-gray.svg",
   "logos/text-white.svg",
   "logos/text-gray.svg"
 ];
@@ -128,6 +129,31 @@ const render = () => {
   quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
   quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // draw sunrays if included
+  let waitForSunrays = includeSunrays;
+  if (includeSunrays) {
+    const image = new Image();
+    image.onload = () => {
+      const xPos = 0 - canvas.width / 2;
+      const yPos = 0 - canvas.height / 4;
+      const width = canvas.width * 2;
+      const height = canvas.height - yPos * 1.3;
+      quoteCtx.drawImage(image, xPos, yPos, width, height);
+      // wait until sunrays have been loaded to draw the foreground
+      renderForeground(canvas, quoteCtx, scheme, size);
+    }
+    image.src = SUNRAYS[0];
+  } else {
+    renderForeground(canvas, quoteCtx, scheme, size);
+  }
+}
+
+/*
+ * Separating the foreground rendering from the background means that the
+ * sunrays won't render over the foreground elements. This renders the border,
+ * logo, quote, and attribution.
+ */
+const renderForeground = (canvas, quoteCtx, scheme, size) => {
   // then draw the border over it
   quoteCtx.strokeStyle = PRIMARY[scheme];
   quoteCtx.lineWidth = BORDERS[size];
@@ -151,6 +177,7 @@ const render = () => {
   const LINE_H = FONT_SIZE[size] + 10;
   const MAX_W = canvas.width - MARGINS[size] * 2;
   const MAX_H = canvas.height;
+  const half = canvas.width / 2;
   wrapText(
     quoteCtx,
     "\“" + quote + "\”",
@@ -296,6 +323,12 @@ document.getElementById("centerElements").addEventListener("click", () => {
 
 // Change selected background/color scheme
 document.getElementById("backgroundColor").addEventListener("change", render);
+
+// Toggle including sunrays
+document.getElementById("includeSunrays").addEventListener("click", () => {
+  includeSunrays = !includeSunrays;
+  render();
+});
 
 // Toggle wordmark
 document.getElementById("useWordmark").addEventListener("click", () => {

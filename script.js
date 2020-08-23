@@ -150,11 +150,17 @@ const renderBackgroundImage = (args) => {
     if (useBackgroundImage) {
       const image = new Image();
       image.onload = () => {
-        // TODO: scale images properly so they take up the entire width/height
-        const xPos = 0 - canvas.width / 2;
-        const yPos = 0 - canvas.height / 4;
-        const width = canvas.width * 2;
-        const height = canvas.height - yPos * 1.3;
+        const imageAspect = image.width / image.height;
+        const canvasAspect = canvas.width / canvas.height;
+        // scale image based on aspect ratios so it covers the entire background
+        const width = canvasAspect > imageAspect ?
+          canvas.width :
+          canvas.height * imageAspect;
+        const height = canvasAspect < imageAspect?
+          canvas.height :
+          canvas.width * (1 / imageAspect);
+        const xPos = (canvas.width - width) / 2;
+        const yPos = (canvas.height - height) / 2;
         // TODO: what blend mode should we use?
         quoteCtx.globalCompositeOperation = "multiply";
         quoteCtx.drawImage(image, xPos, yPos, width, height);

@@ -6,7 +6,6 @@ let showTitle = true;
 let includeLogo = true;
 let splitAttribution = false;
 let centerElements = false;
-let useWordmark = false;
 let includeSunrays = false;
 let useBackgroundImage = false;
 let selectedBackgroundImage = 0;
@@ -24,14 +23,13 @@ const SUNRAYS = [
   "sunrays/orange.svg"
 ];
 const LOGOS = [
-  "logos/logo-yellow.svg",
-  "logos/logo-white.svg",
-  "logos/logo-gray.svg"
+  "logos/national",
+  "logos/nyc"
 ];
-const TEXT_LOGOS = [
-  "logos/text-yellow.svg",
-  "logos/text-white.svg",
-  "logos/text-gray.svg"
+const LOGO_SCHEMES = [
+  "-yellow.svg",
+  "-white.svg",
+  "-gray.svg"
 ];
 const LOGO_HEIGHT = [160, 160, 80]
 const FONT_SIZE = [60, 80, 40];
@@ -247,14 +245,15 @@ const renderForeground = (args) => {
   if (includeLogo) {
     const image = new Image();
     image.onload = () => {
-      const height = useWordmark ? LOGO_HEIGHT[size] * 0.7 : LOGO_HEIGHT[size];
+      const height = LOGO_HEIGHT[size];
       const width = height * (image.width / image.height);
       const xPos = centerElements ?
         (canvas.width - width) / 2 :
         canvas.width - width - MARGINS[size];
       quoteCtx.drawImage(image, xPos, MARGINS[size], width, height);
     }
-    image.src = useWordmark ? TEXT_LOGOS[scheme] : LOGOS[scheme];
+    const logo = document.getElementById("hubLogo").selectedIndex;
+    image.src = LOGOS[logo] + LOGO_SCHEMES[scheme];
   }
 
   if (showAttribution) {
@@ -378,6 +377,9 @@ document.getElementById("centerElements").addEventListener("click", () => {
 // Change selected background/color scheme
 document.getElementById("backgroundColor").addEventListener("change", render);
 
+// Change selected logo
+document.getElementById("hubLogo").addEventListener("change", render);
+
 // Toggle including sunrays
 document.getElementById("includeSunrays").addEventListener("click", () => {
   includeSunrays = !includeSunrays;
@@ -387,12 +389,6 @@ document.getElementById("includeSunrays").addEventListener("click", () => {
 // Toggle using background image
 document.getElementById("useBackgroundImage").addEventListener("click", () => {
   useBackgroundImage = !useBackgroundImage;
-  render();
-});
-
-// Toggle wordmark
-document.getElementById("useWordmark").addEventListener("click", () => {
-  useWordmark = !useWordmark;
   render();
 });
 

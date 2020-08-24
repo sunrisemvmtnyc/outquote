@@ -159,8 +159,8 @@ const renderBackgroundImage = (args) => {
           canvas.width * (1 / imageAspect);
         const xPos = (canvas.width - width) / 2;
         const yPos = (canvas.height - height) / 2;
-        // TODO: what blend mode should we use?
-        quoteCtx.globalCompositeOperation = "multiply";
+        const blendMode = document.getElementById("blendMode").value;
+        quoteCtx.globalCompositeOperation = blendMode;
         quoteCtx.drawImage(image, xPos, yPos, width, height);
         quoteCtx.globalCompositeOperation = "source-over";
         // resolve (draw sunrays) after loading the image
@@ -346,21 +346,10 @@ document.getElementById("saveButton").addEventListener("click", function() {
 // Resize window
 window.addEventListener("resize", render);
 
+/* FORMATTING */
+
 // Change selected canvas size
 document.getElementById("canvasSize").addEventListener("change", render);
-
-// Toggle attribution
-document.getElementById("toggleAttribution").addEventListener("click", () => {
-  showAttribution = !showAttribution;
-  render();
-});
-
-// Toggle attribution title
-document.getElementById("toggleTitle").addEventListener("click", () => {
-  showTitle = !showTitle;
-  name = document.getElementById("quoteAttr").value || "First Last";
-  render();
-});
 
 // Toggle split attribution
 document.getElementById("splitAttribution").addEventListener("click", () => {
@@ -374,11 +363,10 @@ document.getElementById("centerElements").addEventListener("click", () => {
   render();
 });
 
+/* STYLE */
+
 // Change selected background/color scheme
 document.getElementById("backgroundColor").addEventListener("change", render);
-
-// Change selected logo
-document.getElementById("hubLogo").addEventListener("change", render);
 
 // Toggle including sunrays
 document.getElementById("includeSunrays").addEventListener("click", () => {
@@ -389,11 +377,39 @@ document.getElementById("includeSunrays").addEventListener("click", () => {
 // Toggle using background image
 document.getElementById("useBackgroundImage").addEventListener("click", () => {
   useBackgroundImage = !useBackgroundImage;
+  document.getElementById("blendMode").disabled = !useBackgroundImage;
   render();
 });
+
+// Change selected blend mode
+document.getElementById("blendMode").addEventListener("change", render);
+
+/* ELEMENTS */
+
+// Toggle attribution
+document.getElementById("toggleAttribution").addEventListener("click", () => {
+  showAttribution = !showAttribution;
+  document.getElementById("splitAttribution").disabled = !showAttribution;
+  document.getElementById("toggleTitle").disabled = !showAttribution;
+  // make sure attribution title follows suit with attribution
+  document.getElementById("toggleTitle").checked = showAttribution;
+  showTitle = showAttribution;
+  render();
+});
+
+// Toggle attribution title
+document.getElementById("toggleTitle").addEventListener("click", () => {
+  showTitle = !showTitle;
+  name = document.getElementById("quoteAttr").value || "First Last";
+  render();
+});
+
+// Change selected logo
+document.getElementById("hubLogo").addEventListener("change", render);
 
 // Include logo
 document.getElementById("toggleLogo").addEventListener("click", () => {
   includeLogo = !includeLogo;
+  document.getElementById("hubLogo").disabled = !includeLogo;
   render();
 });

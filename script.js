@@ -8,7 +8,6 @@ let splitAttribution = false;
 let centerElements = false;
 let includeSunrays = false;
 let useBackgroundImage = false;
-let selectedBackgroundImage = 0;
 
 const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
 const BACKGROUNDS = [
@@ -18,7 +17,17 @@ const BACKGROUNDS = [
 ];
 // background photos are named by numbers; update NUM_BGS when adding new photos
 const NUM_BGS = 27;
-const BG_PHOTOS = [...Array(NUM_BGS).keys()].map(i => `bg-photos/${i+1}.jpg`);
+const BG_PHOTOS = [...Array(NUM_BGS).keys()].map(i => {
+  const num = `${i+1}`;
+  return `bg-photos/${num.padStart(2, "0")}.jpg`;
+});
+// populate the backgroundImage dropdown
+BG_PHOTOS.forEach((photo, i) => {
+  const option = document.createElement("option");
+  const num = `${i+1}`;
+  option.text = `${num.padStart(2, "0")}.jpg`;
+  document.getElementById("backgroundImage").appendChild(option)
+});
 const SUNRAYS = [
   "sunrays/orange.svg"
 ];
@@ -166,8 +175,8 @@ const renderBackgroundImage = (args) => {
         // resolve (draw sunrays) after loading the image
         resolve(args);
       }
-      // TODO: allow users to select the background image
-      image.src = BG_PHOTOS[selectedBackgroundImage];
+      const i = document.getElementById("backgroundImage").selectedIndex;
+      image.src = BG_PHOTOS[i];
     } else {
       resolve(args);
     }
@@ -306,6 +315,8 @@ const renderForeground = (args) => {
   }
 }
 
+// EVENT HANDLERS
+
 window.setTimeout(render, 700);
 
 document.getElementById("quoteBox").oninput = function() {
@@ -341,8 +352,6 @@ document.getElementById("saveButton").addEventListener("click", function() {
   saveAs(blob, "quote.png");
 });
 
-// EVENT HANDLERS
-
 // Resize window
 window.addEventListener("resize", render);
 
@@ -377,9 +386,15 @@ document.getElementById("includeSunrays").addEventListener("click", () => {
 // Toggle using background image
 document.getElementById("useBackgroundImage").addEventListener("click", () => {
   useBackgroundImage = !useBackgroundImage;
+  document.getElementById("thumbnails").style.display =
+    useBackgroundImage ? "block" : "none";
   document.getElementById("blendMode").disabled = !useBackgroundImage;
+  document.getElementById("backgroundImage").disabled = !useBackgroundImage;
   render();
 });
+
+// Change selected background image
+document.getElementById("backgroundImage").addEventListener("change", render);
 
 // Change selected blend mode
 document.getElementById("blendMode").addEventListener("change", render);

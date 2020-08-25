@@ -8,6 +8,9 @@ let splitAttribution = false;
 let centerElements = false;
 let includeSunrays = false;
 let useBackgroundImage = false;
+let selectedBackgroundImage = 0;
+
+/* CONSTANTS */
 
 const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
 const BACKGROUNDS = [
@@ -20,13 +23,6 @@ const NUM_BGS = 27;
 const BG_PHOTOS = [...Array(NUM_BGS).keys()].map(i => {
   const num = `${i+1}`;
   return `bg-photos/${num.padStart(2, "0")}.jpg`;
-});
-// populate the backgroundImage dropdown
-BG_PHOTOS.forEach((photo, i) => {
-  const option = document.createElement("option");
-  const num = `${i+1}`;
-  option.text = `${num.padStart(2, "0")}.jpg`;
-  document.getElementById("backgroundImage").appendChild(option)
 });
 const SUNRAYS = [
   "sunrays/orange.svg"
@@ -50,6 +46,8 @@ const SIZES = [
 const BORDERS = [10, 10, 8];
 const MARGINS = [100, 100, 60];
 const MAX_CONTAINER_WIDTH = 960;
+
+/* FUNCTIONS */
 
 /*
  * Correctly wraps the quote text by adding each word, checking if it fits
@@ -175,8 +173,7 @@ const renderBackgroundImage = (args) => {
         // resolve (draw sunrays) after loading the image
         resolve(args);
       }
-      const i = document.getElementById("backgroundImage").selectedIndex;
-      image.src = BG_PHOTOS[i];
+      image.src = BG_PHOTOS[selectedBackgroundImage];
     } else {
       resolve(args);
     }
@@ -315,10 +312,42 @@ const renderForeground = (args) => {
   }
 }
 
-// EVENT HANDLERS
+/*
+ * Creates the row and column structure for thumbnails and populates it with the
+ * photos. Also adds the onclick functions that will change the background
+ * image used in the graphic.
+ */
+const createBackgroundImageElements = () => {
+  const thumbnails = document.getElementById("thumbnails");
+  let row;
+  BG_PHOTOS.forEach((photo, i) => {
+    if (i % 4 === 0) {
+      row = document.createElement("div");
+      row.className = "row thumbnail-row";
+    }
+    const column = document.createElement("div");
+    column.className = "three columns center";
+    const image = document.createElement("img");
+    image.className = "thumbnail";
+    image.src = photo;
+    image.onclick = () => {
+      selectedBackgroundImage = i;
+      render();
+    }
+    column.appendChild(image);
+    row.appendChild(column);
+    // if we've already added the four columns, append the row
+    if (i % 4 === 3) {
+      thumbnails.appendChild(row);
+    }
+  });
+  // append the last row if we didn't get it within the loop
+  if (BG_PHOTOS.length-1 % 4 !== 3) thumbnails.appendChild(row);
+}
 
-window.setTimeout(render, 700);
+/* EVENT HANDLERS */
 
+// Type in the quote box
 document.getElementById("quoteBox").oninput = function() {
   quote = this.value;
 
@@ -331,16 +360,19 @@ document.getElementById("quoteBox").oninput = function() {
   render();
 }
 
+// Type in the attribution box
 document.getElementById("quoteAttr").oninput = function() {
   name = this.value;
   render();
 }
 
+// Type in the title box
 document.getElementById("quoteTitle").oninput = function() {
   title = this.value;
   render();
 }
 
+// Save the image
 document.getElementById("saveButton").addEventListener("click", function() {
   const dataURL = canvas.toDataURL("image/png");
   const data = atob(dataURL.substring("data:image/png;base64,".length));
@@ -355,7 +387,7 @@ document.getElementById("saveButton").addEventListener("click", function() {
 // Resize window
 window.addEventListener("resize", render);
 
-/* FORMATTING */
+// FORMATTING
 
 // Change selected canvas size
 document.getElementById("canvasSize").addEventListener("change", render);
@@ -372,7 +404,7 @@ document.getElementById("centerElements").addEventListener("click", () => {
   render();
 });
 
-/* STYLE */
+// STYLE
 
 // Change selected background/color scheme
 document.getElementById("backgroundColor").addEventListener("change", render);
@@ -386,20 +418,16 @@ document.getElementById("includeSunrays").addEventListener("click", () => {
 // Toggle using background image
 document.getElementById("useBackgroundImage").addEventListener("click", () => {
   useBackgroundImage = !useBackgroundImage;
-  document.getElementById("thumbnails").style.display =
+  document.getElementById("thumbnailsContainer").style.display =
     useBackgroundImage ? "block" : "none";
   document.getElementById("blendMode").disabled = !useBackgroundImage;
-  document.getElementById("backgroundImage").disabled = !useBackgroundImage;
   render();
 });
-
-// Change selected background image
-document.getElementById("backgroundImage").addEventListener("change", render);
 
 // Change selected blend mode
 document.getElementById("blendMode").addEventListener("change", render);
 
-/* ELEMENTS */
+// ELEMENTS
 
 // Toggle attribution
 document.getElementById("toggleAttribution").addEventListener("click", () => {
@@ -428,3 +456,8 @@ document.getElementById("toggleLogo").addEventListener("click", () => {
   document.getElementById("hubLogo").disabled = !includeLogo;
   render();
 });
+
+/* RUN */
+
+createBackgroundImageElements();
+window.setTimeout(render, 700);

@@ -16,18 +16,60 @@ iframe {
   height: 400px;
   border: 0;
   margin: -20px;
+  display: none;
 }
 
-.thumbnails {
-  padding: 20px;
+.thumbnails-container {
   margin-bottom: 20px;
   border: 1px solid #33342E;
   border-radius: 5px;
   display: none;
 }
 
+.thumbnails-text {
+  padding: 20px;
+  margin: 0;
+}
+
+.thumbnails {
+  height: 400px;
+  padding: 20px;
+  padding-top: 0;
+  overflow-y: scroll;
+}
+
+.thumbnail-row {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.thumbnail-row:not(:last-of-type) {
+  margin-bottom: 20px;
+}
+
+.thumbnail-row:last-of-type {
+  margin-bottom: 10px;
+}
+
+.thumbnail {
+  max-width: 100%;
+  height: auto;
+  max-height: 150px;
+}
+
+.thumbnail:hover {
+  cursor: pointer;
+}
+
 .center {
   text-align: center;
+}
+
+@media (min-width: 550px) {
+  .thumbnail-row {
+    display: flex;
+    align-items: center;
+  }
 }
 
 #canvasRow {

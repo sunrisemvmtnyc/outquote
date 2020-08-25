@@ -74,7 +74,6 @@
         </select>
         <input type="checkbox" id="includeSunrays">Include sunrays<br>
         <input type="checkbox" id="useBackgroundImage">Use background image<br>
-        <select class="u-full-width background" id="backgroundImage" disabled></select>
         <select class="u-full-width background" id="blendMode" disabled>
           <option value="overlay">Overlay (medium)</option>
           <option value="multiply">Multiply (dark)</option>
@@ -92,11 +91,9 @@
         </select>
       </div>
     </div>
-    <div class="row thumbnails" id="thumbnails">
-      <div class="twelve columns">
-        <p>Select a photo to use in the background of your graphic. You can click to open it in Google Drive and see it larger. Select its name from the drop down above to add it to the graphic.</p>
-        <iframe src="https://drive.google.com/embeddedfolderview?id=1z5qFiOnDFh2uEEV57PF75_69YamAIaEw#grid"></iframe>
-      </div>
+    <div class="thumbnails-container" id="thumbnailsContainer">
+      <p class="thumbnails-text">Click on a photo to use it in the background of your graphic. You can select which filter to use on it in the dropdown above.</p>
+      <div class="thumbnails" id="thumbnails"></div>
     </div>
     <div class="row">
       <div class="twelve columns">

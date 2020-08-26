@@ -73,14 +73,27 @@
           <option value="gradient_b">Yellow/Purple Gradient</option>
         </select>
         <input type="checkbox" id="includeSunrays">Include sunrays<br>
-        <input type="checkbox" id="useWordmark">Use text logo<br>
+        <input type="checkbox" id="useBackgroundImage">Use background image<br>
+        <select class="u-full-width background" id="blendMode" disabled>
+          <option value="overlay">Overlay (medium)</option>
+          <option value="multiply">Multiply (dark)</option>
+          <option value="hard-light">Hard light (light)</option>
+        </select>
       </div>
       <div class="four columns">
         <h5>Elements</h5>
         <input type="checkbox" id="toggleAttribution" checked>Include attribution</input><br>
         <input type="checkbox" id="toggleTitle" checked>Include attribution title</input><br>
-        <input type="checkbox" id="toggleLogo" checked>Include logo</input>
+        <input type="checkbox" id="toggleLogo" checked>Include logo</input><br>
+        <select class="u-full-width background" id="hubLogo">
+          <option value="national">National logo</option>
+          <option value="nyc">NYC logo</option>
+        </select>
       </div>
+    </div>
+    <div class="thumbnails-container" id="thumbnailsContainer">
+      <p class="thumbnails-text">Click on a photo to use it in the background of your graphic. You can select which filter to use on it in the dropdown above.</p>
+      <div class="thumbnails" id="thumbnails"></div>
     </div>
     <div class="row">
       <div class="twelve columns">

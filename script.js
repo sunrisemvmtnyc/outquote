@@ -6,6 +6,7 @@ let showTitle = true;
 let includeLogo = true;
 let splitAttribution = false;
 let centerElements = false;
+let insetLogo = false;
 let includeSunrays = false;
 let useBackgroundImage = false;
 let selectedBackgroundImage = 0;
@@ -36,14 +37,16 @@ const LOGO_SCHEMES = [
   "-white.svg",
   "-gray.svg"
 ];
-const LOGO_HEIGHT = [160, 160, 80]
+const LOGO_HEIGHT = [160, 160, 80];
+// this logo-specific factor adjusts the height when setting it into the border
+const LOGO_INSET_FACTOR = [0.75, 0.85];
 const FONT_SIZE = [60, 80, 40];
 const SIZES = [
   [1080, 1080], // instagram post
   [1080, 1920], // instagram story
   [1280, 640] // twitter/facebook
 ];
-const BORDERS = [10, 10, 8];
+const BORDERS = [10, 10, 6];
 const MARGINS = [100, 100, 60];
 const MAX_CONTAINER_WIDTH = 960;
 
@@ -212,16 +215,27 @@ const renderSunrays = (args) => {
  */
 const renderForeground = (args) => {
   [canvas, quoteCtx, scheme, size] = [...args];
-  // then draw the border over it
+  // draw the border
   quoteCtx.strokeStyle = PRIMARY[scheme];
   quoteCtx.lineWidth = BORDERS[size];
   quoteCtx.beginPath();
-  quoteCtx.rect(
-    MARGINS[size] / 2,
-    MARGINS[size] / 2,
-    canvas.width - MARGINS[size],
-    canvas.height - MARGINS[size]
-  );
+  if (insetLogo) {
+    quoteCtx.moveTo(canvas.width - MARGINS[size] * 1.5, MARGINS[size] / 2);
+    quoteCtx.lineTo(MARGINS[size] / 2, MARGINS[size] / 2);
+    quoteCtx.lineTo(MARGINS[size] / 2, canvas.height - MARGINS[size] / 2);
+    quoteCtx.lineTo(
+      canvas.width - MARGINS[size] / 2,
+      canvas.height - MARGINS[size] / 2
+    );
+    quoteCtx.lineTo(canvas.width - MARGINS[size] / 2, MARGINS[size] * 2);
+  } else {
+    quoteCtx.rect(
+      MARGINS[size] / 2,
+      MARGINS[size] / 2,
+      canvas.width - MARGINS[size],
+      canvas.height - MARGINS[size]
+    );
+  }
   quoteCtx.stroke();
 
   quoteCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
@@ -249,16 +263,26 @@ const renderForeground = (args) => {
 
   // load logo
   if (includeLogo) {
+    const logo = document.getElementById("hubLogo").selectedIndex;
     const image = new Image();
     image.onload = () => {
-      const height = LOGO_HEIGHT[size];
+      const height = insetLogo ?
+        LOGO_HEIGHT[size] * LOGO_INSET_FACTOR[logo] :
+        LOGO_HEIGHT[size];
       const width = height * (image.width / image.height);
-      const xPos = centerElements ?
-        (canvas.width - width) / 2 :
-        canvas.width - width - MARGINS[size];
-      quoteCtx.drawImage(image, xPos, MARGINS[size], width, height);
+      let xPos = canvas.width - width - MARGINS[size];
+      if (centerElements) {
+        xPos = (canvas.width - width) / 2;
+      }
+      // inset logo should override center elements
+      if (insetLogo) {
+        xPos = canvas.width - width - MARGINS[size] / 2;
+      }
+      const yPos = insetLogo ?
+        MARGINS[size] / 2 - BORDERS[size] / 2 :
+        MARGINS[size];
+      quoteCtx.drawImage(image, xPos, yPos, width, height);
     }
-    const logo = document.getElementById("hubLogo").selectedIndex;
     image.src = LOGOS[logo] + LOGO_SCHEMES[scheme];
   }
 
@@ -392,15 +416,21 @@ window.addEventListener("resize", render);
 // Change selected canvas size
 document.getElementById("canvasSize").addEventListener("change", render);
 
+// Toggle center elements
+document.getElementById("centerElements").addEventListener("click", () => {
+  centerElements = !centerElements;
+  render();
+});
+
 // Toggle split attribution
 document.getElementById("splitAttribution").addEventListener("click", () => {
   splitAttribution = !splitAttribution;
   render();
 });
 
-// Toggle center elements
-document.getElementById("centerElements").addEventListener("click", () => {
-  centerElements = !centerElements;
+// Toggle inset logo
+document.getElementById("insetLogo").addEventListener("click", () => {
+  insetLogo = !insetLogo;
   render();
 });
 

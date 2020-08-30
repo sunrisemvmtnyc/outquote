@@ -1,3 +1,4 @@
+/* GLOBALS */
 let quote = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 let name = "First Last";
 let title = "Title";
@@ -13,44 +14,364 @@ let selectedBackgroundImage = 0;
 
 /* CONSTANTS */
 
-const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
-const BACKGROUNDS = [
-  ["#33342E"],
-  ["#8F0D56", "#EF4C39", "#FD9014"],
-  ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
-];
+// RESIZING
+const MAX_CONTAINER_WIDTH = 960;
+
+// BACKGROUND PHOTOS
 // background photos are named by numbers; update NUM_BGS when adding new photos
 const NUM_BGS = 27;
 const BG_PHOTOS = [...Array(NUM_BGS).keys()].map(i => {
   const num = `${i+1}`;
   return `bg-photos/${num.padStart(2, "0")}.jpg`;
 });
+
+// SUNRAYS
 const SUNRAYS = [
   "sunrays/orange.svg"
 ];
+
+// LOGOS
 const LOGOS = [
   "logos/national",
   "logos/nyc"
+];
+// this logo-specific factor adjusts the height when setting it into the border
+const LOGO_INSET_FACTOR = [0.75, 0.85];
+
+// COLOR SCHEMES
+const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
+const BACKGROUNDS = [
+  ["#33342E"],
+  ["#8F0D56", "#EF4C39", "#FD9014"],
+  ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
 ];
 const LOGO_SCHEMES = [
   "-yellow.svg",
   "-white.svg",
   "-gray.svg"
 ];
-const LOGO_HEIGHT = [160, 160, 80];
-// this logo-specific factor adjusts the height when setting it into the border
-const LOGO_INSET_FACTOR = [0.75, 0.85];
-const FONT_SIZE = [60, 80, 40];
+
+// CANVAS SIZE
+const INSTA_POST = 0;
+const INSTA_STORY = 1;
+const TWITTER_FB = 2;
 const SIZES = [
   [1080, 1080], // instagram post
   [1080, 1920], // instagram story
   [1280, 640] // twitter/facebook
 ];
+const LOGO_HEIGHT = [160, 160, 80];
+const FONT_SIZE = [60, 80, 40];
 const BORDERS = [10, 10, 6];
 const MARGINS = [100, 100, 60];
-const MAX_CONTAINER_WIDTH = 960;
 
 /* FUNCTIONS */
+
+/*
+ * First size and transform the canvas as necessary so that it displays well on
+ * various screen sizes. Then call all of the rendering functions for the actual
+ * inputs specified by the user.
+ */
+const render = () => {
+  // the canvas element
+  const canvas = document.getElementById("canvas");
+  // get the context to render everything on
+  const context = canvas.getContext("2d");
+  // the background drop down is used to determine the color scheme
+  const scheme = document.getElementById("backgroundColor").selectedIndex;
+  // the dimensions for the graphic based on the selected social media platform
+  const size = document.getElementById("canvasSize").selectedIndex;
+
+  // resize the canvas based on the selected social media platform
+  canvas.width = SIZES[size][0];
+  canvas.height = SIZES[size][1];
+
+  // resize the canvas element based on its aspect ratio and the screen size
+  transformCanvasByScreenSize(canvas, size);
+
+  // render elements in the correct order
+  renderBackground([canvas, context, scheme, size])
+    .then(renderBackgroundImage)
+    .then(renderSunrays)
+    .then(renderForeground);
+}
+
+/*
+ * Resize the HTML canvas element based on the social media platform selected
+ * and the user's screen size. This ensures that the page doesn't scroll too
+ * much on desktop for the taller sizes, like the Instagram post and story.
+ */
+const transformCanvasByScreenSize = (canvas, size) => {
+  const offsetWidth = document.getElementById("container").offsetWidth;
+  // the container's max width is 960, so get whichever is smaller
+  const containerWidth = Math.min(
+    // subtract 40 for the container's padding on small screens
+    offsetWidth < 400 ? offsetWidth - 40 : offsetWidth,
+    MAX_CONTAINER_WIDTH
+  );
+
+  // on desktop, reduce the size of insta posts/stories so they're not so tall
+  const aspect = containerWidth / canvas.width;
+  const scale = containerWidth > 700 && size != TWITTER_FB ?
+    aspect * 0.5 * canvas.width / canvas.height :
+    aspect;
+  canvas.style.transform = `scale(${scale})`;
+
+  // adjust the size of the canvas's container so we don't get any extra scroll
+  const canvasRow = document.getElementById("canvasRow");
+  canvasRow.style.width = `${canvas.width * scale}px`;
+  canvasRow.style.height = `${canvas.height * scale}px`;
+}
+
+/*
+ * Render the background based on the selected color scheme. It's technically
+ * overkill to use a promise for this function, but it keeps all the rendering
+ * functions consistent.
+ */
+const renderBackground = (args) => {
+  [canvas, context, scheme, size] = [...args];
+  return new Promise(resolve => {
+    const hasGradient = BACKGROUNDS[scheme].length > 1;
+
+    // fill the background with the selection
+    const half = canvas.width / 2;
+    const gradient = context.createLinearGradient(half, 0, half, canvas.height);
+    if (hasGradient) {
+      const stops = BACKGROUNDS[scheme].length - 1;
+      BACKGROUNDS[scheme].forEach((color, i) => {
+        gradient.addColorStop(i / stops, color);
+      });
+    }
+    context.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    resolve(args)
+  });
+}
+
+/*
+ * Render the selected background image. This function returns a promise so that
+ * we can ensure elements are rendered in the correct order.
+ */
+const renderBackgroundImage = (args) => {
+  [canvas, context, scheme, size] = [...args];
+  return new Promise(resolve => {
+    if (useBackgroundImage) {
+      const image = new Image();
+      image.onload = () => {
+        const imageAspect = image.width / image.height;
+        const canvasAspect = canvas.width / canvas.height;
+        // scale image based on aspect ratios so it covers the entire background
+        const width = canvasAspect > imageAspect ?
+          canvas.width :
+          canvas.height * imageAspect;
+        const height = canvasAspect > imageAspect?
+          canvas.width * (1 / imageAspect):
+          canvas.height;
+        const xPos = (canvas.width - width) / 2;
+        const yPos = (canvas.height - height) / 2;
+        const blendMode = document.getElementById("blendMode").value;
+        context.globalCompositeOperation = blendMode;
+        context.drawImage(image, xPos, yPos, width, height);
+        context.globalCompositeOperation = "source-over";
+        // resolve (draw sunrays) after loading the image
+        resolve(args);
+      }
+      image.src = BG_PHOTOS[selectedBackgroundImage];
+    } else {
+      resolve(args);
+    }
+  });
+}
+
+/*
+ * Render sunrays. This function returns a promise so that we can ensure
+ * elements are rendered in the correct order.
+ */
+const renderSunrays = (args) => {
+  return new Promise(resolve => {
+    [canvas, context, scheme, size] = [...args];
+    if (includeSunrays) {
+      const image = new Image();
+      image.onload = () => {
+        // firefox uses svg width/height properties, meaning we can't distort it
+        // thus, the sunrays need to be twice as big as the canvas to cover it
+        const imageAspect = image.width / image.height;
+        const canvasAspect = canvas.width / canvas.height;
+        const width = canvasAspect > imageAspect ?
+          canvas.width * 2 :
+          canvas.height * 2 * imageAspect;
+        const height = canvasAspect > imageAspect?
+          canvas.width * 2 * (1 / imageAspect) :
+          canvas.height * 2;
+        const xPos = (canvas.width - width) / 2;
+        // move yPos up a bit so the rays align with the bottom border
+        const heightAdjust = size == TWITTER_FB ? 10 : canvas.height / 7;
+        const yPos = heightAdjust - MARGINS[size] / 2 - canvas.height;
+        context.drawImage(image, xPos, yPos, width, height);
+        // resolve (draw foreground) after loading the image
+        resolve(args);
+      }
+      image.src = SUNRAYS[0];
+    } else {
+      resolve(args);
+    }
+  });
+}
+
+/*
+ * Separating the foreground rendering from the background means that the
+ * sunrays won't render over the foreground elements. This renders the border,
+ * logo, quote, and attribution.
+ */
+const renderForeground = (args) => {
+  [canvas, context, scheme, size] = [...args];
+  // draw the border
+  context.strokeStyle = PRIMARY[scheme];
+  context.lineWidth = BORDERS[size];
+  context.beginPath();
+  if (insetLogo) {
+    // for the inset logo, we draw four lines to handle the break for the logo
+    context.moveTo(canvas.width - MARGINS[size] * 1.5, MARGINS[size] / 2);
+    context.lineTo(MARGINS[size] / 2, MARGINS[size] / 2);
+    context.lineTo(MARGINS[size] / 2, canvas.height - MARGINS[size] / 2);
+    context.lineTo(
+      canvas.width - MARGINS[size] / 2,
+      canvas.height - MARGINS[size] / 2
+    );
+    context.lineTo(canvas.width - MARGINS[size] / 2, MARGINS[size] * 2);
+  } else {
+    // for the regular logo, we can just draw a stroked rectangle
+    context.rect(
+      MARGINS[size] / 2,
+      MARGINS[size] / 2,
+      canvas.width - MARGINS[size],
+      canvas.height - MARGINS[size]
+    );
+  }
+  context.stroke();
+
+  // set context options for rendering the quote
+  context.font = `400 ${FONT_SIZE[size]}px source sans pro`;
+  context.fillStyle = PRIMARY[scheme];
+  if (centerElements) {
+    context.textAlign = "center";
+  }
+
+  // render quote text
+  const lineH = FONT_SIZE[size] + 10;
+  const maxW = canvas.width - MARGINS[size] * 2;
+  const maxH = canvas.height;
+  const half = canvas.width / 2;
+  const x = centerElements ? half : MARGINS[size];
+  wrapText(context, "\“" + quote + "\”", maxW, maxH, lineH, x, 0, true);
+
+  // load and draw logo
+  if (includeLogo) {
+    const logo = document.getElementById("hubLogo").selectedIndex;
+    const image = new Image();
+    image.onload = () => {
+      const height = insetLogo ?
+        LOGO_HEIGHT[size] * LOGO_INSET_FACTOR[logo] :
+        LOGO_HEIGHT[size];
+      const width = height * (image.width / image.height);
+      let xPos = canvas.width - width - MARGINS[size];
+      if (centerElements) {
+        xPos = (canvas.width - width) / 2;
+      }
+      // inset logo should override center elements
+      if (insetLogo) {
+        xPos = canvas.width - width - MARGINS[size] / 2;
+      }
+      const yPos = insetLogo ?
+        MARGINS[size] / 2 - BORDERS[size] / 2 :
+        MARGINS[size];
+      context.drawImage(image, xPos, yPos, width, height);
+    }
+    image.src = LOGOS[logo] + LOGO_SCHEMES[scheme];
+  }
+
+  // render the attribution
+  if (showAttribution) {
+    const nameCtx = canvas.getContext("2d");
+    const titleCtx = canvas.getContext("2d");
+
+    // set the nameCtx font to get correct width measurement
+    nameCtx.font = `700 ${FONT_SIZE[size]}px source sans pro`;
+    nameCtx.fillStyle = PRIMARY[scheme];
+
+    // get the lengths of the name and title texts
+    let nameText = showTitle && !splitAttribution ? name + " | " : name;
+    const nameLength = nameCtx.measureText(nameText).width;
+    const titleLength = showTitle ? titleCtx.measureText(title).width : 0;
+
+    // if the attribution and/or title are more than one line, adjust positions
+    const lines = splitAttribution ?
+      Math.floor(nameLength / maxW) + Math.ceil(titleLength / maxW) :
+      Math.floor((nameLength + titleLength) / maxW);
+    const xPos = centerElements ? half : MARGINS[size];
+    const yPos = canvas.height - MARGINS[size] - lines * lineH;
+
+    if (centerElements) {
+      nameCtx.textAlign = "center";
+      titleCtx.textAlign = "center";
+      if (!splitAttribution) {
+        // TODO: this is a bit hacky and on really long text doesn't quite work
+        // (this is because spaces break differently on the lines than text)
+        const count = Math.round(titleLength / nameCtx.measureText(" ").width);
+        nameText += " ".repeat(count);
+      }
+    }
+
+    // fill name text
+    wrapText(nameCtx, nameText, maxW, maxH, lineH, xPos, yPos, false);
+
+    // fill title text
+    if (showTitle) {
+      titleCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
+      if (splitAttribution) {
+        const yPosTitle = yPos + lineH;
+        wrapText(titleCtx, title, maxW, maxH, lineH, xPos, yPosTitle, false);
+      } else {
+        const count = Math.round(nameLength / titleCtx.measureText(" ").width);
+        const text = " ".repeat(count) + title;
+        wrapText(titleCtx, text, maxW, maxH, lineH, xPos, yPos, false);
+      }
+    }
+  }
+}
+
+/*
+ * Creates the row and column structure for thumbnails and populates it with the
+ * photos. Also adds the onclick functions that will change the background
+ * image used in the graphic.
+ */
+const createBackgroundImageElements = () => {
+  const thumbnails = document.getElementById("thumbnails");
+  let row;
+  BG_PHOTOS.forEach((photo, i) => {
+    if (i % 4 === 0) {
+      row = document.createElement("div");
+      row.className = "row thumbnail-row";
+    }
+    const column = document.createElement("div");
+    column.className = "three columns center";
+    const image = document.createElement("img");
+    image.className = "thumbnail";
+    image.src = photo;
+    image.onclick = () => {
+      selectedBackgroundImage = i;
+      render();
+    }
+    column.appendChild(image);
+    row.appendChild(column);
+    // if we've already added the four columns, append the row
+    if (i % 4 === 3) {
+      thumbnails.appendChild(row);
+    }
+  });
+  // append the last row if we didn't get it within the loop
+  if ((BG_PHOTOS.length - 1) % 4 !== 3) thumbnails.appendChild(row);
+}
 
 /*
  * Correctly wraps the quote text by adding each word, checking if it fits
@@ -90,283 +411,6 @@ const wrapText = (context, text, maxW, maxH, lineH, x, y, vCenter) => {
     [line, x, y] = [...item];
     context.fillText(line, x, y + adjustedHeight);
   });
-}
-
-/*
- * This the main function; it goes through all of the various options and
- * renders based on how the user has selected them.
- */
-const render = () => {
-  // get the container's width to use in sizing calculations
-  let containerWidth = document.getElementById("container").offsetWidth;
-  if (containerWidth < 400) {
-    // subtract 40 for the container's padding (20px on left and right)
-    containerWidth -= 40;
-  }
-  // the container's max width is 960, so get whichever is smaller
-  containerWidth = Math.min(containerWidth, MAX_CONTAINER_WIDTH);
-
-  // resize the canvas based on the selected social media platform
-  const canvas = document.getElementById("canvas");
-  const size = document.getElementById("canvasSize").selectedIndex;
-  canvas.width = SIZES[size][0];
-  canvas.height = SIZES[size][1];
-
-  // calculate the amount we should transform by
-  let aspect = containerWidth / canvas.width;
-  // on desktop, reduce the size of insta posts/stories so they're not so tall
-  if (containerWidth > 700 && containerWidth < canvas.height) {
-    aspect *= 0.5 * canvas.width / canvas.height;
-  }
-  canvas.style.transform = `scale(${aspect})`;
-
-  // adjust the size of the canvas's container so we don't get any extra scroll
-  const canvasRow = document.getElementById("canvasRow");
-  canvasRow.style.width = `${canvas.width * aspect}px`;
-  canvasRow.style.height = `${canvas.height * aspect}px`;
-
-  // the background drop down is used to determine the color scheme
-  const scheme = document.getElementById("backgroundColor").selectedIndex;
-  const hasGradient = BACKGROUNDS[scheme].length > 1;
-
-  // fill the background with the selection
-  const quoteCtx = canvas.getContext("2d");
-  const half = canvas.width / 2;
-  const gradient = quoteCtx.createLinearGradient(half, 0, half, canvas.height);
-  if (hasGradient) {
-    const stops = BACKGROUNDS[scheme].length - 1;
-    BACKGROUNDS[scheme].forEach((color, i) => {
-      gradient.addColorStop(i / stops, color);
-    });
-  }
-  quoteCtx.fillStyle = hasGradient ? gradient : BACKGROUNDS[scheme];
-  quoteCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // render elements in the correct order
-  renderBackgroundImage([canvas, quoteCtx, scheme, size])
-    .then(renderSunrays)
-    .then(renderForeground);
-}
-
-/*
- * Render the selected background image. This function returns a promise so that
- * we can ensure elements are rendered in the correct order.
- */
-const renderBackgroundImage = (args) => {
-  [canvas, quoteCtx, scheme, size] = [...args];
-  return new Promise(resolve => {
-    if (useBackgroundImage) {
-      const image = new Image();
-      image.onload = () => {
-        const imageAspect = image.width / image.height;
-        const canvasAspect = canvas.width / canvas.height;
-        // scale image based on aspect ratios so it covers the entire background
-        const width = canvasAspect > imageAspect ?
-          canvas.width :
-          canvas.height * imageAspect;
-        const height = canvasAspect < imageAspect?
-          canvas.height :
-          canvas.width * (1 / imageAspect);
-        const xPos = (canvas.width - width) / 2;
-        const yPos = (canvas.height - height) / 2;
-        const blendMode = document.getElementById("blendMode").value;
-        quoteCtx.globalCompositeOperation = blendMode;
-        quoteCtx.drawImage(image, xPos, yPos, width, height);
-        quoteCtx.globalCompositeOperation = "source-over";
-        // resolve (draw sunrays) after loading the image
-        resolve(args);
-      }
-      image.src = BG_PHOTOS[selectedBackgroundImage];
-    } else {
-      resolve(args);
-    }
-  });
-}
-
-/*
- * Render sunrays. This function returns a promise so that we can ensure
- * elements are rendered in the correct order.
- */
-const renderSunrays = (args) => {
-  return new Promise(resolve => {
-    [canvas, quoteCtx, scheme, size] = [...args];
-    if (includeSunrays) {
-      const image = new Image();
-      image.onload = () => {
-        const xPos = 0 - canvas.width / 2;
-        const yPos = 0 - canvas.height / 4;
-        const width = canvas.width * 2;
-        const height = canvas.height - yPos * 1.3;
-        quoteCtx.drawImage(image, xPos, yPos, width, height);
-        // resolve (draw foreground) after loading the image
-        resolve(args);
-      }
-      image.src = SUNRAYS[0];
-    } else {
-      resolve(args);
-    }
-  });
-}
-
-/*
- * Separating the foreground rendering from the background means that the
- * sunrays won't render over the foreground elements. This renders the border,
- * logo, quote, and attribution.
- */
-const renderForeground = (args) => {
-  [canvas, quoteCtx, scheme, size] = [...args];
-  // draw the border
-  quoteCtx.strokeStyle = PRIMARY[scheme];
-  quoteCtx.lineWidth = BORDERS[size];
-  quoteCtx.beginPath();
-  if (insetLogo) {
-    quoteCtx.moveTo(canvas.width - MARGINS[size] * 1.5, MARGINS[size] / 2);
-    quoteCtx.lineTo(MARGINS[size] / 2, MARGINS[size] / 2);
-    quoteCtx.lineTo(MARGINS[size] / 2, canvas.height - MARGINS[size] / 2);
-    quoteCtx.lineTo(
-      canvas.width - MARGINS[size] / 2,
-      canvas.height - MARGINS[size] / 2
-    );
-    quoteCtx.lineTo(canvas.width - MARGINS[size] / 2, MARGINS[size] * 2);
-  } else {
-    quoteCtx.rect(
-      MARGINS[size] / 2,
-      MARGINS[size] / 2,
-      canvas.width - MARGINS[size],
-      canvas.height - MARGINS[size]
-    );
-  }
-  quoteCtx.stroke();
-
-  quoteCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
-  quoteCtx.fillStyle = PRIMARY[scheme];
-
-  if (centerElements) {
-    quoteCtx.textAlign = "center";
-  }
-
-  // render quote text
-  const LINE_H = FONT_SIZE[size] + 10;
-  const MAX_W = canvas.width - MARGINS[size] * 2;
-  const MAX_H = canvas.height;
-  const half = canvas.width / 2;
-  wrapText(
-    quoteCtx,
-    "\“" + quote + "\”",
-    MAX_W,
-    MAX_H,
-    LINE_H,
-    centerElements ? half : MARGINS[size],
-    0,
-    true
-  );
-
-  // load logo
-  if (includeLogo) {
-    const logo = document.getElementById("hubLogo").selectedIndex;
-    const image = new Image();
-    image.onload = () => {
-      const height = insetLogo ?
-        LOGO_HEIGHT[size] * LOGO_INSET_FACTOR[logo] :
-        LOGO_HEIGHT[size];
-      const width = height * (image.width / image.height);
-      let xPos = canvas.width - width - MARGINS[size];
-      if (centerElements) {
-        xPos = (canvas.width - width) / 2;
-      }
-      // inset logo should override center elements
-      if (insetLogo) {
-        xPos = canvas.width - width - MARGINS[size] / 2;
-      }
-      const yPos = insetLogo ?
-        MARGINS[size] / 2 - BORDERS[size] / 2 :
-        MARGINS[size];
-      quoteCtx.drawImage(image, xPos, yPos, width, height);
-    }
-    image.src = LOGOS[logo] + LOGO_SCHEMES[scheme];
-  }
-
-  if (showAttribution) {
-    quoteCtx.textAlign = "left"; // makes below calculations work
-    const nameCtx = canvas.getContext("2d");
-    const titleCtx = canvas.getContext("2d");
-
-    // set the nameCtx font to get correct width measurement
-    nameCtx.font = `700 ${FONT_SIZE[size]}px source sans pro`;
-    nameCtx.fillStyle = PRIMARY[scheme];
-
-    let nameText = showTitle && !splitAttribution ? name + " | " : name;
-    const nameLength = nameCtx.measureText(nameText).width;
-    const titleLength = showTitle ? titleCtx.measureText(title).width : 0;
-
-    // if the attribution and/or title are more than one line, adjust positions
-    const lines = splitAttribution ?
-      Math.floor(nameLength / MAX_W) + Math.ceil(titleLength / MAX_W) :
-      Math.floor((nameLength + titleLength) / MAX_W);
-    const xPos = centerElements ? half : MARGINS[size];
-    const yPos = canvas.height - MARGINS[size] - lines * LINE_H;
-
-    if (centerElements) {
-      nameCtx.textAlign = "center";
-      titleCtx.textAlign = "center";
-      if (!splitAttribution) {
-        // TODO: this is a bit hacky and on really long text doesn't quite work
-        // (the reason is because spaces break differently on the lines than text)
-        // could possibly handle this with non-breaking spaces
-        const count = Math.round(titleLength / nameCtx.measureText(" ").width);
-        nameText += " ".repeat(count);
-      }
-    }
-
-    // fill name text
-    wrapText(nameCtx, nameText, MAX_W, MAX_H, LINE_H, xPos, yPos, false);
-
-    // fill title text
-    if (showTitle) {
-      titleCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
-      if (splitAttribution) {
-        const yPosTitle = yPos + LINE_H;
-        wrapText(titleCtx, title, MAX_W, MAX_H, LINE_H, xPos, yPosTitle, false);
-      } else {
-        const count = Math.round(nameLength / titleCtx.measureText(" ").width);
-        const text = " ".repeat(count) + title;
-        wrapText(titleCtx, text, MAX_W, MAX_H, LINE_H, xPos, yPos, false);
-      }
-    }
-  }
-}
-
-/*
- * Creates the row and column structure for thumbnails and populates it with the
- * photos. Also adds the onclick functions that will change the background
- * image used in the graphic.
- */
-const createBackgroundImageElements = () => {
-  const thumbnails = document.getElementById("thumbnails");
-  let row;
-  BG_PHOTOS.forEach((photo, i) => {
-    if (i % 4 === 0) {
-      row = document.createElement("div");
-      row.className = "row thumbnail-row";
-    }
-    const column = document.createElement("div");
-    column.className = "three columns center";
-    const image = document.createElement("img");
-    image.className = "thumbnail";
-    image.src = photo;
-    image.onclick = () => {
-      selectedBackgroundImage = i;
-      render();
-    }
-    column.appendChild(image);
-    row.appendChild(column);
-    // if we've already added the four columns, append the row
-    if (i % 4 === 3) {
-      thumbnails.appendChild(row);
-    }
-  });
-  // append the last row if we didn't get it within the loop
-  if (BG_PHOTOS.length-1 % 4 !== 3) thumbnails.appendChild(row);
 }
 
 /* EVENT HANDLERS */

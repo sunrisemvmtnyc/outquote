@@ -8,7 +8,7 @@ Here's some of what Outquote can do!
 
 ![](social-card.png)
 
-See the Wiki for more examples and walkthroughs of how to use the tool.
+See the [Wiki](https://github.com/sunrisemvmtnyc/outquote/wiki) for more examples and walkthroughs of how to use the tool.
 
 ## Current work
 

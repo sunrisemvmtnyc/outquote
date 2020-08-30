@@ -126,7 +126,7 @@ const transformCanvasByScreenSize = (canvas, size) => {
 /*
  * Render the background based on the selected color scheme. It's technically
  * overkill to use a promise for this function, but it keeps all the rendering
- * function consistent.
+ * functions consistent.
  */
 const renderBackground = (args) => {
   [canvas, context, scheme, size] = [...args];

@@ -193,10 +193,19 @@ const renderSunrays = (args) => {
     if (includeSunrays) {
       const image = new Image();
       image.onload = () => {
-        const xPos = 0 - canvas.width / 2;
-        const yPos = 0 - canvas.height / 4;
-        const width = canvas.width * 2;
-        const height = canvas.height - yPos * 1.3;
+        // firefox uses svg width/height properties, meaning we can't distort it
+        // thus, the sunrays need to be twice as big as the canvas to cover it
+        const imageAspect = image.width / image.height;
+        const canvasAspect = canvas.width / canvas.height;
+        const width = canvasAspect > imageAspect ?
+          canvas.width * 2 :
+          canvas.height * 2 * imageAspect;
+        const height = canvasAspect < imageAspect?
+          canvas.height * 2 :
+          canvas.width * 2 * (1 / imageAspect);
+        const xPos = (canvas.width - width) / 2;
+        // move yPos up a bit so the rays align with the bottom border
+        const yPos = canvas.height / 7 - MARGINS[size] / 2 - height / 2;
         quoteCtx.drawImage(image, xPos, yPos, width, height);
         // resolve (draw foreground) after loading the image
         resolve(args);

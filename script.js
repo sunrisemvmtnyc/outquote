@@ -1,18 +1,14 @@
 /* GLOBALS */
-let quote = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
-let name = "First Last";
-let title = "Title";
-let showAttribution = true;
-let showTitle = true;
-let includeLogo = true;
-let splitAttribution = false;
-let centerElements = false;
-let insetLogo = false;
-let includeSunrays = false;
-let useBackgroundImage = false;
+
 let selectedBackgroundImage = 0;
 
 /* CONSTANTS */
+
+const DEFAULT_QUOTE = `Lorem ipsum dolor sit amet, consectetur adipisicing
+elit, sed do eiusmod tempor incididunt ut labore et dolore magna
+aliqua.`.replace(/\n/g, " ");
+const DEFAULT_ATTR = "First Last";
+const DEFAULT_TITLE = "Title";
 
 // RESIZING
 const MAX_CONTAINER_WIDTH = 960;
@@ -155,7 +151,7 @@ const renderBackground = (args) => {
 const renderBackgroundImage = (args) => {
   [canvas, context, scheme, size] = [...args];
   return new Promise(resolve => {
-    if (useBackgroundImage) {
+    if (document.getElementById("useBackgroundImage").checked) {
       const image = new Image();
       image.onload = () => {
         const imageAspect = image.width / image.height;
@@ -190,7 +186,7 @@ const renderBackgroundImage = (args) => {
 const renderSunrays = (args) => {
   return new Promise(resolve => {
     [canvas, context, scheme, size] = [...args];
-    if (includeSunrays) {
+    if (document.getElementById("includeSunrays").checked) {
       const image = new Image();
       image.onload = () => {
         // firefox uses svg width/height properties, meaning we can't distort it
@@ -229,6 +225,7 @@ const renderForeground = (args) => {
   context.strokeStyle = PRIMARY[scheme];
   context.lineWidth = BORDERS[size];
   context.beginPath();
+  const insetLogo = document.getElementById("insetLogo").checked;
   if (insetLogo) {
     // for the inset logo, we draw four lines to handle the break for the logo
     context.moveTo(canvas.width - MARGINS[size] * 1.5, MARGINS[size] / 2);
@@ -251,6 +248,7 @@ const renderForeground = (args) => {
   context.stroke();
 
   // set context options for rendering the quote
+  const centerElements = document.getElementById("centerElements").checked;
   context.font = `400 ${FONT_SIZE[size]}px source sans pro`;
   context.fillStyle = PRIMARY[scheme];
   if (centerElements) {
@@ -263,10 +261,10 @@ const renderForeground = (args) => {
   const maxH = canvas.height;
   const half = canvas.width / 2;
   const x = centerElements ? half : MARGINS[size];
-  wrapText(context, "\“" + quote + "\”", maxW, maxH, lineH, x, 0, true);
+  wrapText(context, getAndCleanQuote(), maxW, maxH, lineH, x, 0, true);
 
   // load and draw logo
-  if (includeLogo) {
+  if (document.getElementById("toggleLogo").checked) {
     const logo = document.getElementById("hubLogo").selectedIndex;
     const image = new Image();
     image.onload = () => {
@@ -291,7 +289,11 @@ const renderForeground = (args) => {
   }
 
   // render the attribution
-  if (showAttribution) {
+  if (document.getElementById("toggleAttribution").checked) {
+    const name = document.getElementById("quoteAttr").value || DEFAULT_ATTR;
+    const title = document.getElementById("quoteTitle").value || DEFAULT_TITLE;
+
+    // get contexts for name and title
     const nameCtx = canvas.getContext("2d");
     const titleCtx = canvas.getContext("2d");
 
@@ -300,12 +302,14 @@ const renderForeground = (args) => {
     nameCtx.fillStyle = PRIMARY[scheme];
 
     // get the lengths of the name and title texts
-    let nameText = showTitle && !splitAttribution ? name + " | " : name;
+    const splitAttrib = document.getElementById("splitAttribution").checked;
+    const showTitle = document.getElementById("toggleTitle").checked;
+    let nameText = showTitle && !splitAttrib ? name + " | " : name;
     const nameLength = nameCtx.measureText(nameText).width;
     const titleLength = showTitle ? titleCtx.measureText(title).width : 0;
 
     // if the attribution and/or title are more than one line, adjust positions
-    const lines = splitAttribution ?
+    const lines = splitAttrib ?
       Math.floor(nameLength / maxW) + Math.ceil(titleLength / maxW) :
       Math.floor((nameLength + titleLength) / maxW);
     const xPos = centerElements ? half : MARGINS[size];
@@ -314,7 +318,7 @@ const renderForeground = (args) => {
     if (centerElements) {
       nameCtx.textAlign = "center";
       titleCtx.textAlign = "center";
-      if (!splitAttribution) {
+      if (!splitAttrib) {
         // TODO: this is a bit hacky and on really long text doesn't quite work
         // (this is because spaces break differently on the lines than text)
         const count = Math.round(titleLength / nameCtx.measureText(" ").width);
@@ -328,7 +332,7 @@ const renderForeground = (args) => {
     // fill title text
     if (showTitle) {
       titleCtx.font = `400 ${FONT_SIZE[size]}px source sans pro`;
-      if (splitAttribution) {
+      if (splitAttrib) {
         const yPosTitle = yPos + lineH;
         wrapText(titleCtx, title, maxW, maxH, lineH, xPos, yPosTitle, false);
       } else {
@@ -413,35 +417,42 @@ const wrapText = (context, text, maxW, maxH, lineH, x, y, vCenter) => {
   });
 }
 
-/* EVENT HANDLERS */
+/*
+ * Get the quote from the text box element and replace all apostrophes and
+ * quotation marks in it with curly ones. Return the converted quote within
+ * curly quote marks.
+ */
+const getAndCleanQuote = () => {
+  let quote = document.getElementById("quoteBox").value;
 
-// Type in the quote box
-document.getElementById("quoteBox").oninput = function() {
-  quote = this.value;
+  // use default quote if user leaves quote box empty
+  if (!quote) {
+    return `\“${DEFAULT_QUOTE}\“`;
+  }
 
-  // Convert all quotes to curly quotes
+  // convert all quotes to curly quotes
   quote = quote.replace(/\b'/g, "\’");
   quote = quote.replace(/'(?=\d)/g, "\’");
   quote = quote.replace(/'(?=\b|$)/g, "\‘");
   quote = quote.replace(/\b"/g, "\”");
   quote = quote.replace(/"(?=\w|$)/g, "\“");
-  render();
+
+  return `\“${quote}\“`;
 }
+
+/* EVENT HANDLERS */
+
+// Type in the quote box
+document.getElementById("quoteBox").oninput = render;
 
 // Type in the attribution box
-document.getElementById("quoteAttr").oninput = function() {
-  name = this.value;
-  render();
-}
+document.getElementById("quoteAttr").oninput = render;
 
 // Type in the title box
-document.getElementById("quoteTitle").oninput = function() {
-  title = this.value;
-  render();
-}
+document.getElementById("quoteTitle").oninput = render;
 
 // Save the image
-document.getElementById("saveButton").addEventListener("click", function() {
+document.getElementById("saveButton").addEventListener("click", () => {
   const dataURL = canvas.toDataURL("image/png");
   const data = atob(dataURL.substring("data:image/png;base64,".length));
   const asArray = new Uint8Array(data.length);
@@ -461,22 +472,13 @@ window.addEventListener("resize", render);
 document.getElementById("canvasSize").addEventListener("change", render);
 
 // Toggle center elements
-document.getElementById("centerElements").addEventListener("click", () => {
-  centerElements = !centerElements;
-  render();
-});
+document.getElementById("centerElements").addEventListener("click", render);
 
 // Toggle split attribution
-document.getElementById("splitAttribution").addEventListener("click", () => {
-  splitAttribution = !splitAttribution;
-  render();
-});
+document.getElementById("splitAttribution").addEventListener("click", render);
 
 // Toggle inset logo
-document.getElementById("insetLogo").addEventListener("click", () => {
-  insetLogo = !insetLogo;
-  render();
-});
+document.getElementById("insetLogo").addEventListener("click", render);
 
 // STYLE
 
@@ -484,17 +486,14 @@ document.getElementById("insetLogo").addEventListener("click", () => {
 document.getElementById("backgroundColor").addEventListener("change", render);
 
 // Toggle including sunrays
-document.getElementById("includeSunrays").addEventListener("click", () => {
-  includeSunrays = !includeSunrays;
-  render();
-});
+document.getElementById("includeSunrays").addEventListener("click", render);
 
 // Toggle using background image
 document.getElementById("useBackgroundImage").addEventListener("click", () => {
-  useBackgroundImage = !useBackgroundImage;
-  document.getElementById("thumbnailsContainer").style.display =
-    useBackgroundImage ? "block" : "none";
-  document.getElementById("blendMode").disabled = !useBackgroundImage;
+  const checked = document.getElementById("useBackgroundImage").checked;
+  const thumbnailsContainer = document.getElementById("thumbnailsContainer");
+  thumbnailsContainer.style.display = checked ? "block" : "none";
+  document.getElementById("blendMode").disabled = !checked;
   render();
 });
 
@@ -505,29 +504,26 @@ document.getElementById("blendMode").addEventListener("change", render);
 
 // Toggle attribution
 document.getElementById("toggleAttribution").addEventListener("click", () => {
-  showAttribution = !showAttribution;
-  document.getElementById("splitAttribution").disabled = !showAttribution;
-  document.getElementById("toggleTitle").disabled = !showAttribution;
+  const checked = document.getElementById("toggleAttribution").checked;
+  document.getElementById("splitAttribution").disabled = !checked;
+  document.getElementById("toggleTitle").disabled = !checked;
   // make sure attribution title follows suit with attribution
-  document.getElementById("toggleTitle").checked = showAttribution;
-  showTitle = showAttribution;
+  document.getElementById("toggleTitle").checked = checked;
   render();
 });
 
 // Toggle attribution title
-document.getElementById("toggleTitle").addEventListener("click", () => {
-  showTitle = !showTitle;
-  name = document.getElementById("quoteAttr").value || "First Last";
-  render();
-});
+document.getElementById("toggleTitle").addEventListener("click", render);
 
 // Change selected logo
 document.getElementById("hubLogo").addEventListener("change", render);
 
 // Include logo
 document.getElementById("toggleLogo").addEventListener("click", () => {
-  includeLogo = !includeLogo;
-  document.getElementById("hubLogo").disabled = !includeLogo;
+  const checked = document.getElementById("toggleLogo").checked;
+  document.getElementById("hubLogo").disabled = !checked;
+  document.getElementById("insetLogo").disabled = !checked;
+  document.getElementById("insetLogo").checked = checked;
   render();
 });
 

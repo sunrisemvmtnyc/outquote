@@ -507,7 +507,8 @@ document.getElementById("toggleAttribution").addEventListener("click", () => {
   const checked = document.getElementById("toggleAttribution").checked;
   document.getElementById("splitAttribution").disabled = !checked;
   document.getElementById("toggleTitle").disabled = !checked;
-  // make sure attribution title follows suit with attribution
+  // make sure split attribution and title follow suit with attribution
+  document.getElementById("splitAttribution").checked = checked;
   document.getElementById("toggleTitle").checked = checked;
   render();
 });

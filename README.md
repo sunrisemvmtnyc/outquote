@@ -1,6 +1,6 @@
 # Outquote
 
-Used at Sunrise NYC for quick quote cards to put on our various social media platforms. Forked from [The Daily Pennsylvanian](https://github.com/dailypenn/outquote).
+Used at Sunrise NYC for quick quote cards to put on our various social media platforms. Originally forked from [The Daily Pennsylvanian](https://github.com/dailypenn/outquote) and then made into its own repo as it became pretty divergent from the original code.
 
 ## Examples
 

@@ -35,16 +35,18 @@ const LOGOS = [
 const LOGO_INSET_FACTOR = [0.75, 0.85];
 
 // COLOR SCHEMES
-const PRIMARY = ["#FFDE16", "#E3EDDF", "#33342E"];
+const PRIMARY = ["#E3EDDF", "#33342E", "#33342E", "#FFDE16"];
 const BACKGROUNDS = [
-  ["#33342E"],
   ["#8F0D56", "#EF4C39", "#FD9014"],
-  ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"]
+  ["#8F0D56", "#EF4C39", "#FD9014", "#FFDE16"],
+  ["#FFDE16"],
+  ["#33342E"]
 ];
 const LOGO_SCHEMES = [
-  "-yellow.svg",
   "-white.svg",
-  "-gray.svg"
+  "-gray.svg",
+  "-gray.svg",
+  "-yellow.svg"
 ];
 
 // CANVAS SIZE

@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for outquote
+about: Suggest an idea for Movement Graphic Maker
 title: ''
 labels: enhancement, unreviewed
 assignees: alexwgraves

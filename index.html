@@ -18,44 +18,43 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container" id="container">
-    <div class="row">
+  <div class="mgm-container" id="container">
+    <div class="mgm-row">
       <h2>Movement Graphic Maker</h2>
       <p>Social media quote card generator.</p>
     </div>
-    <div class="row" id="canvasRow">
+    <div class="mgm-row" id="canvasRow">
       <canvas id="canvas">
         Your browser does not support the canvas element. Please use a modern browser.
       </canvas>
     </div>
   </div>
 
-  <div class="container">
+  <div class="mgm-container">
     <p>
       The text card will render as you type. Click "save" to download a <code>.png</code> of the canvas.
     </p>
     <h4>Content</h4>
     <textarea class="u-full-width" type="text" id="quoteBox" placeholder="Quote Text" value=""></textarea>
-    <div class="row">
-      <div class="six columns">
+    <div class="mgm-row">
+      <div class="six mgm-columns">
         <input class="u-full-width" type="text" id="quoteAttr" placeholder="Quote Attribution" value="">
       </div>
-      <div class="six columns">
+      <div class="six mgm-columns">
         <input class="u-full-width" type="text" id="quoteTitle" placeholder="Atribution Subtext" value="">
       </div>
     </div>
-    <div class="row">
-      <div class="twelve columns">
+    <div class="mgm-row">
+      <div class="twelve mgm-columns">
         <h4>Options</h4>
       </div>
     </div>
-    <div class="row">
-      <div class="four columns">
+    <div class="mgm-row">
+      <div class="four mgm-columns">
         <h5>Formatting</h5>
         <select class="u-full-width background" id="canvasSize">
           <option value="instagram">Instagram Post</option>
@@ -66,7 +65,7 @@
         <input type="checkbox" id="splitAttribution" checked>Split attribution over two lines</input><br>
         <input type="checkbox" id="insetLogo" checked>Set logo into border</input>
       </div>
-      <div class="four columns">
+      <div class="four mgm-columns">
         <h5>Style</h5>
         <select class="u-full-width background" id="backgroundColor">
           <option value="gradient_a">Orange/Purple Gradient</option>
@@ -82,7 +81,7 @@
           <option value="hard-light">Hard light (light)</option>
         </select>
       </div>
-      <div class="four columns">
+      <div class="four mgm-columns">
         <h5>Elements</h5>
         <input type="checkbox" id="toggleAttribution" checked>Include attribution</input><br>
         <input type="checkbox" id="toggleTitle" checked>Include attribution title</input><br>
@@ -97,13 +96,13 @@
       <p class="thumbnails-text">Click on a photo to use it in the background of your graphic. You can select which filter to use on it in the dropdown above.</p>
       <div class="thumbnails" id="thumbnails"></div>
     </div>
-    <div class="row">
-      <div class="twelve columns">
+    <div class="mgm-row">
+      <div class="twelve mgm-columns">
         <button class="u-full-width button-primary" type="button" id="saveButton">Save &#8595;</button>
       </div>
     </div>
-    <div class="row">
-      <div class="twelve columns center">
+    <div class="mgm-row">
+      <div class="twelve mgm-columns center">
         Have a feature you'd like added? <a href="https://gitreports.com/issue/sunrisemvmtnyc/outquote?details=%2A%2AIs+your+feature+request+related+to+a+problem%3F+Please+describe.%2A%2A%0D%0AA+clear+and+concise+description+of+what+the+problem+is.+Ex.+I%27m+always+frustrated+when+%5B...%5D%0D%0A%0D%0A%2A%2ADescribe+the+solution+you%27d+like%2A%2A%0D%0AA+clear+and+concise+description+of+what+you+want+to+happen.%0D%0A%0D%0A%2A%2ADescribe+alternatives+you%27ve+considered%2A%2A%0D%0AA+clear+and+concise+description+of+any+alternative+solutions+or+features+you%27ve+considered.%0D%0A%0D%0A%2A%2AAdditional+context%2A%2A%0D%0AAdd+any+other+context+or+screenshots+about+the+feature+request+here." target="_blank">Submit one here.</a>
         <br>
         Found an issue? <a href="https://gitreports.com/issue/sunrisemvmtnyc/outquote?details=%2A%2ADescribe+the+bug%2A%2A%0D%0AA+clear+and+concise+description+of+what+the+issue+is.%0D%0A%0D%0A%2A%2ATo+Reproduce%2A%2A%0D%0ASteps+to+reproduce+the+behavior%3A%0D%0A1.+Go+to+%27...%27%0D%0A2.+Click+on+%27....%27%0D%0A3.+Scroll+down+to+%27....%27%0D%0A4.+See+error%0D%0A%0D%0A%2A%2AExpected+behavior%2A%2A%0D%0AA+clear+and+concise+description+of+what+you+expected+to+happen.%0D%0A%0D%0A%2A%2ADesktop+%28please+complete+the+following+information%29%3A%2A%2A%0D%0A+-+OS%3A+%5Be.g.+iOS%5D%0D%0A+-+Browser+%5Be.g.+chrome%2C+safari%5D%0D%0A%0D%0A%2A%2AMobile+%28please+complete+the+following+information%29%3A%2A%2A%0D%0A+-+Device%3A+%5Be.g.+iPhone%2FGalaxy%5D%0D%0A+-+OS%3A+%5Be.g.+iOS8.1%5D%0D%0A+-+Browser+%5Be.g.+safari%2C+chrome%5D%0D%0A%0D%0A%2A%2AAdditional+context%2A%2A%0D%0AAdd+any+other+context+about+the+problem+here." target="_blank">Report it here.</a>

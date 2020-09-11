@@ -357,10 +357,10 @@ const createBackgroundImageElements = () => {
   BG_PHOTOS.forEach((photo, i) => {
     if (i % 4 === 0) {
       row = document.createElement("div");
-      row.className = "row thumbnail-row";
+      row.className = "mgm-row thumbnail-row";
     }
     const column = document.createElement("div");
-    column.className = "three columns center";
+    column.className = "three mgm-columns center";
     const image = document.createElement("img");
     image.className = "thumbnail";
     image.src = photo;

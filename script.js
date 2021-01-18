@@ -439,7 +439,7 @@ const getAndCleanQuote = () => {
   quote = quote.replace(/\b"/g, "\”");
   quote = quote.replace(/"(?=\w|$)/g, "\“");
 
-  return `\“${quote}\“`;
+  return `\“${quote}\”`;
 }
 
 /* EVENT HANDLERS */

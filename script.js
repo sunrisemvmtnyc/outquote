@@ -4,6 +4,10 @@ let selectedBackgroundImage = 0;
 
 /* CONSTANTS */
 
+const LEFT_CURLY_DOUBLE = "\“";
+const RIGHT_CURLY_DOUBLE = "\”";
+const LEFT_CURLY_SINGLE = "\‘";
+const RIGHT_CURLY_SINGLE = "\’";
 const DEFAULT_QUOTE = `Lorem ipsum dolor sit amet, consectetur adipisicing
 elit, sed do eiusmod tempor incididunt ut labore et dolore magna
 aliqua.`.replace(/\n/g, " ");
@@ -425,21 +429,23 @@ const wrapText = (context, text, maxW, maxH, lineH, x, y, vCenter) => {
  * curly quote marks.
  */
 const getAndCleanQuote = () => {
+  const showQuotes = document.getElementById("showQuotes").checked;
+  const leftQuote = showQuotes ? LEFT_CURLY_DOUBLE : "";
+  const rightQuote = showQuotes ? RIGHT_CURLY_DOUBLE : "";
   let quote = document.getElementById("quoteBox").value;
 
   // use default quote if user leaves quote box empty
   if (!quote) {
-    return `\“${DEFAULT_QUOTE}\“`;
+    return `${leftQuote}${DEFAULT_QUOTE}${rightQuote}`;
   }
 
-  // convert all quotes to curly quotes
-  quote = quote.replace(/\b'/g, "\’");
-  quote = quote.replace(/'(?=\d)/g, "\’");
-  quote = quote.replace(/'(?=\b|$)/g, "\‘");
-  quote = quote.replace(/\b"/g, "\”");
-  quote = quote.replace(/"(?=\w|$)/g, "\“");
+  // convert all quotes to curly quotes (do right single first for apostrophes)
+  quote = quote.replace(/\b'/g, `${RIGHT_CURLY_SINGLE}`);
+  quote = quote.replace(/'(?=\b|$)/g, `${LEFT_CURLY_SINGLE}`);
+  quote = quote.replace(/\b"/g, `${RIGHT_CURLY_DOUBLE}`);
+  quote = quote.replace(/"(?=\b|$)/g, `${LEFT_CURLY_DOUBLE}`);
 
-  return `\“${quote}\”`;
+  return `${leftQuote}${quote}${rightQuote}`;
 }
 
 /* EVENT HANDLERS */
@@ -475,6 +481,9 @@ document.getElementById("canvasSize").addEventListener("change", render);
 
 // Toggle center elements
 document.getElementById("centerElements").addEventListener("click", render);
+
+// Toggle quotation marks
+document.getElementById("showQuotes").addEventListener("click", render);
 
 // Toggle split attribution
 document.getElementById("splitAttribution").addEventListener("click", render);
